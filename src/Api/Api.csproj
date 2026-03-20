@@ -13,10 +13,9 @@
     
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\analyzers\MyApi.Analyzers\MyApi.Analyzers.csproj"
-                    OutputItemType="Analyzer"
-                    ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\analyzers\MyApi.Analyzers\MyApi.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\App\App.csproj" />
+    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
   </ItemGroup>
-
 
 </Project>

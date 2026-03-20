@@ -1,29 +1,35 @@
+using MyWebApi.App.DTO;
+using MyWebApi.App.Interfaces;
+using MyWebApi.App.Services;
+using MyWebApi.Domain.Entities;
+using MyWebApi.Infrastructure.Repositories;
+
 namespace MyWebApi;
 
 public class Program
 {
-
-       
     public static void Main(string[] args)
     {
-        Test t = new Test();
-        t.Hey(1);
-    }
-}
+        var builder = WebApplication.CreateBuilder(args);
 
+        builder.Services.AddControllers();
 
-public class Test()
-{
-     
-    public void Hey(int name)
-    {
-        if(name == 1)
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
+        builder.Services.AddScoped<IService<UserDto>, UserService>();
+        builder.Services.AddScoped<IRepository<User>, UserRepository>();
+
+        var app = builder.Build();
+
+        if (app.Environment.IsDevelopment())
         {
-            Console.WriteLine("hej");
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
-        else
-        {
-            Console.WriteLine("då");
-        }
+
+        app.MapControllers();
+
+        app.Run();
     }
 }
