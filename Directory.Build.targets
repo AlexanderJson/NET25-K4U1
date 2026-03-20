@@ -1,0 +1,76 @@
+<!-- I apply my targets here. This is a way to make sure our project are in-sync with our CI/CD pipeline before pushing anything -->
+
+    <!-- BeforeTargets="Build" = runs the check BEFORE building the project -->
+    <!-- AfterTargets="Build" = runs the check AFTER building the project -->
+
+    <!-- possible targets: 
+        Test (when running dotnet test it would run)
+        Clean
+        Rebuild
+        Publish
+        Build
+        Restore
+     -->
+
+<Project>
+
+
+
+  <Target Name="EnsureNet8" BeforeTargets="Build">
+        <Error Condition="'$(TargetFramework)' != 'net8.0'"
+              Text="All projects must target net8.0" />
+  </Target>
+
+
+  <Target Name="BuildInfo" AfterTargets="Build">
+        <Message Text="Built $(MSBuildProjectName) ($(Configuration)) targeting $(TargetFramework)" Importance="high" />
+  </Target>
+
+  <Target Name="CoverageCheck" AfterTargets="Test">
+  <Error Condition="'$(Coverage)' &lt; '80'"
+         Text="Coverage below 80%" />
+</Target>
+<!--  Makes sure no secrets are committed to git ever -->
+<Target Name="NoSecrets" BeforeTargets="Build">
+  <Error Condition="Exists('secrets.json')"
+         Text="Secrets file must not be committed!" />
+</Target>
+
+<!-- this makes sure test packages are only used inside test projects -->
+  <Target Name="NoTestPackagesInNonTestProjects" BeforeTargets="Build">
+    <Error Condition="
+      '$(IsTestProject)' != 'true' AND
+      (
+        @(PackageReference->AnyHaveMetadataValue('Identity','xunit')) OR
+        @(PackageReference->AnyHaveMetadataValue('Identity','Microsoft.NET.Test.Sdk')) OR
+        @(PackageReference->AnyHaveMetadataValue('Identity','coverlet.collector'))
+      )
+    "
+    Text="Test packages are only allowed in test projects!" />
+  </Target>
+
+<!-- this makes sure we get error if test projects dont contain code!! -->
+  <Target Name="EnsureTestsExist" AfterTargets="Build">
+    <Error Condition="'$(IsTestProject)' == 'true' AND '@(Compile)' == ''"
+           Text="Test project has no test files!" />
+  </Target>
+
+<!-- This makes sure theres no vulnerabilities on packages  -->
+  <Target Name="SecurityAudit" BeforeTargets="Build" Condition="'$(CI)' == 'true'">
+    <Exec Command="dotnet list package --vulnerable" />
+  </Target>
+
+<!-- This makes sure  CI builds use Release configuration -->  
+<Target Name="NoDebugInCI" BeforeTargets="Build">
+    <Error Condition="'$(CI)' == 'true' AND '$(Configuration)' != 'Release'"
+           Text="CI must run Release builds only!" />
+  </Target>
+
+
+
+<Target Name="RunProjectStats" BeforeTargets="Build">
+  <Exec Command='powershell -ExecutionPolicy Bypass -File "$(MSBuildThisFileDirectory)scripts\stats.ps1"' />
+</Target>
+</Project>
+
+ 
