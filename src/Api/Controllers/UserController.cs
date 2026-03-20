@@ -22,9 +22,30 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Create(CreateUserDto dto)
+    public IActionResult Create([FromBody]CreateUserDto dto)
     {
         _service.Add(dto);
         return Created("", null);
+    }
+
+    [HttpGet("{id:guid}")]
+    public IActionResult GetById(Guid id)
+    {
+        var user = _service.getById(id);
+        return Ok(user);
+    }
+
+    [HttpPut("{id:guid}")]
+    public IActionResult Update(Guid id, [FromBody] CreateUserDto dto)
+    {
+        var updated = _service.Update(id, dto);
+        return Ok(updated);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public IActionResult Delete(Guid id)
+    {
+        _service.Delete(id);
+        return NoContent();
     }
 }

@@ -1,53 +1,75 @@
 using MyWebApi.App.DTO;
-using BCrypt.Net;
-using MyWebApi.App.Interfaces;
 using MyWebApi.Domain.Entities;
+using MyWebApi.App.Abstracts;
+using MyWebApi.Api.Interfaces;
+
 
 namespace MyWebApi.App.Services;
-public class UserService : IService<CreateUserDto, UserDto>
+public class UserService : AService<CreateUserDto, UserDto, User>
 {
-    private readonly IRepository<User> _repo;
-    public UserService(IRepository<User> repo)
+    private readonly IUserRepository _userRepo;
+
+    public UserService(IUserRepository userRepo) : base(userRepo)
     {
-        _repo = repo;
+        _userRepo = userRepo;
     }
 
-    public void Add(CreateUserDto dto)
+    protected override void ApplyUpdate(User entity, CreateUserDto dto)
     {
-        var user = new User
+        if (!string.IsNullOrWhiteSpace(dto.Username))
+            entity.Username = dto.Username;
+
+        if (!string.IsNullOrWhiteSpace(dto.Password))
+            entity.Password = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+
+
+        if (!string.IsNullOrWhiteSpace(dto.Name))
+            entity.Name = dto.Name;
+    }
+    protected override UserDto MapToDto(User entity)
+    {
+        return new UserDto
+        {
+            Id = entity.Id,
+            Username = entity.Username
+        };
+    }
+    protected override User MapToEntity(CreateUserDto dto)
+    {
+        return new User
         {
             Id = Guid.NewGuid(),
-            Name = dto.Name,
             Username = dto.Username,
             Password = BCrypt.Net.BCrypt.HashPassword(dto.Password)
         };
-        _repo.Add(user);
-         //TODO nice response med wrapper
     }
 
-    public List<UserDto> GetAll()
+    protected override void ValidateAdd(CreateUserDto dto)
     {
-        return _repo.GetAll()
-            .Select(u => new UserDto
-            {
-                Name = u.Name,
-                Username = u.Username,
-                Password = u.Password
-            })
-            .ToList();
+        if (string.IsNullOrWhiteSpace(dto.Username))
+            throw new ArgumentException("Username required!");
+
+        if (string.IsNullOrWhiteSpace(dto.Password))
+            throw new ArgumentException("Password required!");
+
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            throw new ArgumentException("Name required!");
+
+        if (_userRepo.IsUsernameTaken(dto.Username))
+            throw new UsernameTakenException("User already exists.");
     }
 
-    public UserDto getById(Guid id)
+    protected override void ValidateUpdate(User entity, CreateUserDto dto)
     {
-        var user = _repo.getById(id);
-        return new UserDto
+        if (!string.IsNullOrWhiteSpace(dto.Username) &&
+            dto.Username != entity.Username &&
+            _userRepo.IsUsernameTaken(dto.Username))
         {
-            Name = user.Name,
-            Username = user.Username,
-            
-        };  
-        
+            throw new UsernameTakenException("Username already taken.");
+        }
     }
+
+
 }
 
 
