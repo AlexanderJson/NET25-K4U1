@@ -14,13 +14,10 @@
 
 <Project>
 
-
-
-  <Target Name="EnsureNet8" BeforeTargets="Build">
-        <Error Condition="'$(TargetFramework)' != 'net8.0'"
-              Text="All projects must target net8.0" />
-  </Target>
-
+<Target Name="EnsureNet8" BeforeTargets="Build">
+  <Error Condition="'$(TargetFramework)' != 'net8.0' AND '$(IsAnalyzerProject)' != 'true'"
+         Text="All projects must target net8.0" />
+</Target>
 
   <Target Name="BuildInfo" AfterTargets="Build">
         <Message Text="Built $(MSBuildProjectName) ($(Configuration)) targeting $(TargetFramework)" Importance="high" />
