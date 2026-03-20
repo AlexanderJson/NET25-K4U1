@@ -10,9 +10,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
-    
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+
   </ItemGroup>
   <ItemGroup>
+  
     <ProjectReference Include="..\..\analyzers\MyApi.Analyzers\MyApi.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\App\App.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />

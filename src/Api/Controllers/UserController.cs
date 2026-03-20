@@ -8,8 +8,8 @@ namespace MyWebApi.Api.Controllers;
 [Route("api/[controller]")]
 public class UserController : ControllerBase
 {
-    private readonly IService<UserDto> _service;
-    public UserController(IService<UserDto> service)
+    private readonly IService<CreateUserDto, UserDto> _service;
+    public UserController(IService<CreateUserDto, UserDto> service)
     {
         _service = service;
     }
@@ -22,9 +22,9 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Create(UserDto dto)
+    public IActionResult Create(CreateUserDto dto)
     {
         _service.Add(dto);
-        return Ok();
+        return Created("", null);
     }
 }

@@ -1,28 +1,43 @@
 
 using MyWebApi.App.Interfaces;
 using MyWebApi.Domain.Entities;
+using MyWebApi.Infrastructure.Data;
+
 namespace MyWebApi.Infrastructure.Repositories;
 
 
 public class UserRepository : IRepository<User>
 {
+    private readonly AppDbContext _context;
+    public UserRepository(AppDbContext context)
+    {
+        _context = context;
+    }
     private static List<User> _users = new();
-    private static int _id = 1;
 
     public void Add(User user)
     {
-        user.Id = _id++;
-        _users.Add(user);
+        if (user.Id == Guid.Empty)
+        {
+            user.Id = Guid.NewGuid();
+        }
+        _context.Users.Add(user);
+        _context.SaveChanges();
     }
 
     public List<User> GetAll()
     {
-        return _users;
+        return _context.Users.ToList();
     }
 
-	public User getById(int id)
+	public User getById(Guid id)
 	{
-		throw new NotImplementedException();
-	}
+        var user = _context.Users.FirstOrDefault(u => u.Id == id);
+
+        if (user == null)
+            throw new Exception("User not found");
+
+        return user;
+        }
 
 }

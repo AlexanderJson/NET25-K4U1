@@ -1,10 +1,10 @@
 namespace MyWebApi.App.Interfaces;
 
-public interface IService<T>
+public interface IService<addDto, getDto>
 {
-    T Add(T data);
-    T getById(int id);
+    void Add(addDto data);
+    getDto getById(Guid id);
 
-    List<T> GetAll();
+    List<getDto> GetAll();
 
 }

@@ -1,9 +1,10 @@
 using MyWebApi.App.DTO;
+using BCrypt.Net;
 using MyWebApi.App.Interfaces;
 using MyWebApi.Domain.Entities;
 
 namespace MyWebApi.App.Services;
-public class UserService : IService<UserDto>
+public class UserService : IService<CreateUserDto, UserDto>
 {
     private readonly IRepository<User> _repo;
     public UserService(IRepository<User> repo)
@@ -11,34 +12,42 @@ public class UserService : IService<UserDto>
         _repo = repo;
     }
 
-
-    UserDto IService<UserDto>.Add(UserDto dto)
+    public void Add(CreateUserDto dto)
     {
         var user = new User
         {
-            Name = dto.Name
+            Id = Guid.NewGuid(),
+            Name = dto.Name,
+            Username = dto.Username,
+            Password = BCrypt.Net.BCrypt.HashPassword(dto.Password)
         };
         _repo.Add(user);
-        return dto; //TODO!
+         //TODO nice response med wrapper
     }
 
-    List<UserDto> IService<UserDto>.GetAll()
+    public List<UserDto> GetAll()
     {
         return _repo.GetAll()
             .Select(u => new UserDto
             {
-                Name = u.Name
+                Name = u.Name,
+                Username = u.Username,
+                Password = u.Password
             })
             .ToList();
     }
 
-    UserDto IService<UserDto>.getById(int id)
+    public UserDto getById(Guid id)
     {
         var user = _repo.getById(id);
         return new UserDto
         {
-            Name = user.Name
-        };
+            Name = user.Name,
+            Username = user.Username,
+            
+        };  
         
     }
 }
+
+
