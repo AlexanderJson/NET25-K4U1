@@ -7,38 +7,38 @@ namespace MyWebApi.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController : ControllerBase
+public class WorkspacesController : ControllerBase
 {
-    private readonly IService<CreateUserDto, UserDto> _service;
+    private readonly IService<CreateWorkspaceDto, WorkspaceDto> _service;
 
-    public UsersController(IService<CreateUserDto, UserDto> service)
+    public WorkspacesController(IService<CreateWorkspaceDto, WorkspaceDto> service)
     {
         _service = service;
     }
 
     [HttpGet]
-    public ActionResult<PagedResult<UserDto>> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public ActionResult<PagedResult<WorkspaceDto>> GetWorkspaces([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         var result = _service.GetPaged(page, pageSize);
         return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
-    public ActionResult<UserDto> GetById(Guid id)
+    public ActionResult<WorkspaceDto> GetById(Guid id)
     {
-        UserDto user = _service.GetById(id);
-        return Ok(user);
+        WorkspaceDto workspace = _service.GetById(id);
+        return Ok(workspace);
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] CreateUserDto dto)
+    public IActionResult Create([FromBody] CreateWorkspaceDto dto)
     {
         _service.Add(dto);
         return Created("", null);
     }
 
     [HttpPut("{id:guid}")]
-    public ActionResult<UserDto> Update(Guid id, [FromBody] CreateUserDto dto)
+    public ActionResult<WorkspaceDto> Update(Guid id, [FromBody] CreateWorkspaceDto dto)
     {
         var updated = _service.Update(id, dto);
         return Ok(updated);

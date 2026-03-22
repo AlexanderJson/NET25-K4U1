@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using MyWebApi.App.External.Nasa;
 using MyWebApi.App.External.Quantum;
 
 

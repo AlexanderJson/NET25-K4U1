@@ -6,8 +6,8 @@ namespace MyWebApi.App.Abstracts;
 
 public abstract class AService<TPostDto, TGetDto, TEntity> : IService<TPostDto, TGetDto>
 {
-    protected readonly IRepository<TEntity> _repo;
-    protected AService(IRepository<TEntity> repo)
+    protected readonly ICrudRepository<TEntity> _repo;
+    protected AService(ICrudRepository<TEntity> repo)
     {
         _repo = repo;
     }

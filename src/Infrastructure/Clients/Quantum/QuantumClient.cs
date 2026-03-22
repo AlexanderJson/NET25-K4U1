@@ -12,7 +12,6 @@ public class QuantumClient(HttpClient http, IOptions<QuantumOptions> options) : 
     {
         try
         {
-            Console.WriteLine($"API KEY: {_options.ApiKey}");
             var req = new HttpRequestMessage
             (
                 HttpMethod.Get,

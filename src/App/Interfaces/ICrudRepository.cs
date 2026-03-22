@@ -1,7 +1,7 @@
 namespace MyWebApi.App.Interfaces;
 
 
-public interface IRepository<T>
+public interface ICrudRepository<T>
 {
 
     IQueryable<T> Query();

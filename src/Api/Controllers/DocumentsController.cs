@@ -7,38 +7,38 @@ namespace MyWebApi.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController : ControllerBase
+public class DocumentsController : ControllerBase
 {
-    private readonly IService<CreateUserDto, UserDto> _service;
+    private readonly IService<CreateDocumentDto, DocumentDto> _service;
 
-    public UsersController(IService<CreateUserDto, UserDto> service)
+    public DocumentsController(IService<CreateDocumentDto, DocumentDto> service)
     {
         _service = service;
     }
 
     [HttpGet]
-    public ActionResult<PagedResult<UserDto>> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public ActionResult<PagedResult<DocumentDto>> GetDocuments([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         var result = _service.GetPaged(page, pageSize);
         return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
-    public ActionResult<UserDto> GetById(Guid id)
+    public ActionResult<DocumentDto> GetById(Guid id)
     {
-        UserDto user = _service.GetById(id);
-        return Ok(user);
+        DocumentDto document = _service.GetById(id);
+        return Ok(document);
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] CreateUserDto dto)
+    public IActionResult Create([FromBody] CreateDocumentDto dto)
     {
         _service.Add(dto);
         return Created("", null);
     }
 
     [HttpPut("{id:guid}")]
-    public ActionResult<UserDto> Update(Guid id, [FromBody] CreateUserDto dto)
+    public ActionResult<DocumentDto> Update(Guid id, [FromBody] CreateDocumentDto dto)
     {
         var updated = _service.Update(id, dto);
         return Ok(updated);

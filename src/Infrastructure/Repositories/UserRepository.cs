@@ -67,6 +67,11 @@ public class UserRepository : IUserRepository
         _context.Users.Update(user); // Since I use GetById in Service it tracks the entity anyways, but kept this for safety
         _context.SaveChanges(); 
     }
+
+    public bool IsEmailTaken(string email)
+    {
+        return  _context.Users.Any(u => u.Email == email);
+    }
 }
 
 
