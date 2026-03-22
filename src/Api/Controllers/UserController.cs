@@ -1,24 +1,31 @@
 using Microsoft.AspNetCore.Mvc;
 using MyWebApi.App.DTO;
 using MyWebApi.App.Interfaces;
+using MyWebApi.App.Services;
 
 namespace MyWebApi.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UserController : ControllerBase
+public class UsersController : ControllerBase
 {
     private readonly IService<CreateUserDto, UserDto> _service;
-    public UserController(IService<CreateUserDto, UserDto> service)
+    public UsersController(IService<CreateUserDto, UserDto> service)
     {
         _service = service;
     }
-
     [HttpGet]
-    public IActionResult GetAll()
+    public ActionResult<PagedResult<UserDto>> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var users = _service.GetAll();
-        return Ok(users);
+        var result = _service.GetPaged(page,pageSize);
+        return Ok(result);
+    }
+
+    [HttpGet("{id:guid}")]
+    public ActionResult<UserDto> GetById(Guid id)
+    {
+        UserDto user = _service.GetById(id);
+        return Ok(user);
     }
 
     [HttpPost]
@@ -28,15 +35,9 @@ public class UserController : ControllerBase
         return Created("", null);
     }
 
-    [HttpGet("{id:guid}")]
-    public IActionResult GetById(Guid id)
-    {
-        var user = _service.getById(id);
-        return Ok(user);
-    }
 
     [HttpPut("{id:guid}")]
-    public IActionResult Update(Guid id, [FromBody] CreateUserDto dto)
+    public ActionResult<UserDto> Update(Guid id, [FromBody] CreateUserDto dto)
     {
         var updated = _service.Update(id, dto);
         return Ok(updated);
@@ -46,6 +47,7 @@ public class UserController : ControllerBase
     public IActionResult Delete(Guid id)
     {
         _service.Delete(id);
-        return NoContent();
+        return NoContent(); //TODO
     }
+
 }

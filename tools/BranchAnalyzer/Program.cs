@@ -3,6 +3,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Globalization;
 using System.Text.Json;
 
+
+/*
 public class Program
 {
     public static void Main()
@@ -13,26 +15,21 @@ public class Program
 
         if (apiPath == null)
         {
-            Console.WriteLine("Path not found");
             return;
         }
 
-        Console.WriteLine($"API Path: {apiPath}");
 
          var files = md.GetFiles(apiPath);
 
-        Console.WriteLine($"Found {files.Count} files");
 
          var classes = md.GetClasses(files);
 
-        Console.WriteLine($"Found {classes.Count} classes");
 
          var outputPath = Path.Combine(apiPath, "classes.json");
 
          var writer = new Writer();
         writer.WriteToJson(classes, outputPath);
 
-        Console.WriteLine($"JSON written to: {outputPath}");
         var generator = new TestGenerator();
 
 foreach (var clazz in classes)
@@ -44,9 +41,7 @@ foreach (var clazz in classes)
 
     var testPath = Path.Combine(apiPath, $"{clazz.ClassName}Tests.cs");
 
-    File.WriteAllText(testPath, testCode);
 
-    Console.WriteLine($"Generated tests for {clazz.ClassName}");
 }
     }
 }
@@ -112,7 +107,6 @@ public sealed class Metadata()
 
             if (Directory.Exists(Path.Combine(current.FullName, "src")))
             {
-                Console.WriteLine($"Found project root: {current.FullName}");
                 return current.FullName;
             }
 
@@ -136,9 +130,7 @@ public sealed class Metadata()
     {
         var clazz = new List<ClassMetadata>();
         foreach (var file in files)
-        {
-            var content = File.ReadAllText(file);
-            var tree = CSharpSyntaxTree.ParseText(content);
+                    var tree = CSharpSyntaxTree.ParseText(content);
             var root = tree.GetRoot();
 
             var clazzes = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
@@ -312,3 +304,5 @@ private string GetDefaultValue(string type)
         return sb.ToString();
     }
 }
+
+*/

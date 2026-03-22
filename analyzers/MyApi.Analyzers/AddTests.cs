@@ -22,6 +22,8 @@ private static readonly DiagnosticDescriptor Rule = new(
     true);
 public override void Initialize(AnalysisContext context)
 {
+    context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+    context.EnableConcurrentExecution();
     context.RegisterSyntaxNodeAction(AnalyzeIfStatement, SyntaxKind.IfStatement);
 }
 

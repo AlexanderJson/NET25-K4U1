@@ -3,6 +3,8 @@ namespace MyWebApi.App.Interfaces;
 
 public interface IRepository<T>
 {
+
+    IQueryable<T> Query();
     void Add(T data);
     T GetById(Guid id);
 

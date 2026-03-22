@@ -5,28 +5,20 @@ using MyWebApi.Api.Interfaces;
 
 
 namespace MyWebApi.App.Services;
-public class UserService : AService<CreateUserDto, UserDto, User>
+public class UserService(IUserRepository userRepo) : AService<CreateUserDto, UserDto, User>(userRepo)
 {
-    private readonly IUserRepository _userRepo;
-
-    public UserService(IUserRepository userRepo) : base(userRepo)
-    {
-        _userRepo = userRepo;
-    }
+    private readonly IUserRepository _userRepo = userRepo;
 
     protected override void ApplyUpdate(User entity, CreateUserDto dto)
     {
         if (!string.IsNullOrWhiteSpace(dto.Username))
             entity.Username = dto.Username;
-
         if (!string.IsNullOrWhiteSpace(dto.Password))
             entity.Password = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-
-
         if (!string.IsNullOrWhiteSpace(dto.Name))
             entity.Name = dto.Name;
     }
-    protected override UserDto MapToDto(User entity)
+    protected override UserDto ReturnDto(User entity)
     {
         return new UserDto
         {
@@ -34,7 +26,7 @@ public class UserService : AService<CreateUserDto, UserDto, User>
             Username = entity.Username
         };
     }
-    protected override User MapToEntity(CreateUserDto dto)
+    protected override User GetEntity(CreateUserDto dto)
     {
         return new User
         {
@@ -43,8 +35,7 @@ public class UserService : AService<CreateUserDto, UserDto, User>
             Password = BCrypt.Net.BCrypt.HashPassword(dto.Password)
         };
     }
-
-    protected override void ValidateAdd(CreateUserDto dto)
+    protected override void ValidateArgs(CreateUserDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Username))
             throw new ArgumentException("Username required!");
@@ -68,8 +59,11 @@ public class UserService : AService<CreateUserDto, UserDto, User>
             throw new UsernameTakenException("Username already taken.");
         }
     }
+    protected override IQueryable<User> ApplyOrdering(IQueryable<User> query)
+    {
+        return query.OrderBy(u=> u.Id);
+    }
 
 
 }
-
 
