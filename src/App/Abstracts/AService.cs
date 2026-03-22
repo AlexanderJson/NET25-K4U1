@@ -1,5 +1,7 @@
 using MyWebApi.App.Interfaces;
 using MyWebApi.App.Services;
+using MyWebApi.App.Exceptions;
+using MyWebApi.App.Querying;
 namespace MyWebApi.App.Abstracts;
 
 public abstract class AService<TPostDto, TGetDto, TEntity> : IService<TPostDto, TGetDto>

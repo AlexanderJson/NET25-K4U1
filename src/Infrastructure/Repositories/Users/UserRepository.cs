@@ -2,9 +2,8 @@
 using MyWebApi.Domain.Entities;
 using MyWebApi.Infrastructure.Data;
 using MyWebApi.Api.Interfaces;
-using MyWebApi.App.DTO;
 using Microsoft.EntityFrameworkCore;
-namespace MyWebApi.Infrastructure.Repositories;
+namespace MyWebApi.Infrastructure.Repositories.Users;
 
 //TODO async?
 public class UserRepository : IUserRepository

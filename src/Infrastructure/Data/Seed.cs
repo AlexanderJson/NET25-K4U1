@@ -5,6 +5,8 @@ public static class Seed
 {
     public static void SeedUsers(AppDbContext context)
     {
+        if(context.Users.Any())
+            return;
 
         var users = new List<User>();
         for (int i = 1; i <= 50; i++)

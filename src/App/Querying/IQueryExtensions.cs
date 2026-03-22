@@ -1,4 +1,4 @@
-namespace MyWebApi.App.Services;
+namespace MyWebApi.App.Querying;
 
 /// <summary>
 /// I extend the <see cref="IQueryable{T}"/>  interface to implement some own logic 

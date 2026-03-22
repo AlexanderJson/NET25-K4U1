@@ -1,6 +1,7 @@
 using MyWebApi.App.DTO;
 using MyWebApi.Domain.Entities;
 using MyWebApi.App.Abstracts;
+using MyWebApi.App.Exceptions;
 using MyWebApi.Api.Interfaces;
 
 
