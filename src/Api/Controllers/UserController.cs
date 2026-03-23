@@ -9,9 +9,9 @@ namespace MyWebApi.Api.Controllers;
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    private readonly IService<CreateUserDto, UserDto> _service;
+    private readonly ICrudService<CreateUserDto, UserDto> _service;
 
-    public UsersController(IService<CreateUserDto, UserDto> service)
+    public UsersController(ICrudService<CreateUserDto, UserDto> service)
     {
         _service = service;
     }

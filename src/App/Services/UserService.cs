@@ -33,6 +33,12 @@ public class UserService(IUserRepository userRepo)
         };
     }
 
+    /// <summary>
+    /// We always hash password when returning entity.
+    /// This method is used for POST/PUT/PATCH
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns></returns>
     protected override User GetEntity(CreateUserDto dto)
     {
         return new User

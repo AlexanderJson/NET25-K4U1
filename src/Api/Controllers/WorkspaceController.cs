@@ -5,13 +5,14 @@ using MyWebApi.App.Services;
 
 namespace MyWebApi.Api.Controllers;
 
+
 [ApiController]
 [Route("api/[controller]")]
 public class WorkspacesController : ControllerBase
 {
-    private readonly IService<CreateWorkspaceDto, WorkspaceDto> _service;
+    private readonly ICrudService<CreateWorkspaceDto, WorkspaceDto> _service;
 
-    public WorkspacesController(IService<CreateWorkspaceDto, WorkspaceDto> service)
+    public WorkspacesController(ICrudService<CreateWorkspaceDto, WorkspaceDto> service)
     {
         _service = service;
     }
@@ -22,6 +23,8 @@ public class WorkspacesController : ControllerBase
         var result = _service.GetPaged(page, pageSize);
         return Ok(result);
     }
+
+
 
     [HttpGet("{id:guid}")]
     public ActionResult<WorkspaceDto> GetById(Guid id)

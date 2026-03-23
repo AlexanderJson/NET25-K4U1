@@ -7,27 +7,25 @@ public static class Seed
 {
     public static void SeedAll(AppDbContext db)
     {
-    
 
         var random = new Random();
-
-        var users = SeedUsers();
+        List<User> users = SeedUsers();
         db.Users.AddRange(users);
         db.SaveChanges();
 
-        var workspaces = SeedWorkspaces(users, random);
+        List<Workspace> workspaces = SeedWorkspaces(users, random);
         db.Workspaces.AddRange(workspaces);
         db.SaveChanges();
 
-        var members = SeedWorkspaceMembers(workspaces, users, random);
+        List<WorkSpaceMember> members = SeedWorkspaceMembers(workspaces, users, random);
         db.WorkspaceMembers.AddRange(members);
         db.SaveChanges();
 
-        var documents = SeedDocuments(workspaces, members, random);
+        List<Document> documents = SeedDocuments(workspaces, members, random);
         db.Documents.AddRange(documents);
         db.SaveChanges();
 
-        var invites = SeedInvites(workspaces, random);
+        List<Invite> invites = SeedInvites(workspaces, random);
         db.Invites.AddRange(invites);
         db.SaveChanges();
     }
@@ -36,7 +34,7 @@ public static class Seed
     {
         var users = new List<User>();
 
-        for (int i = 1; i <= 50; i++)
+        for (var i = 1; i <= 50; i++)
         {
             users.Add(new User
             {
@@ -55,9 +53,9 @@ public static class Seed
     {
         var workspaces = new List<Workspace>();
 
-        for (int i = 1; i <= 20; i++)
+        for (var i = 1; i <= 20; i++)
         {
-            var owner = users[random.Next(users.Count)];
+            User owner = users[random.Next(users.Count)];
 
             workspaces.Add(new Workspace
             {
@@ -76,7 +74,7 @@ public static class Seed
     {
         var members = new List<WorkSpaceMember>();
 
-        foreach (var workspace in workspaces)
+        foreach (Workspace workspace in workspaces)
         {
             var usedUserIds = new HashSet<Guid>();
 
@@ -120,17 +118,17 @@ public static class Seed
     {
         var documents = new List<Document>();
 
-        foreach (var workspace in workspaces)
+        foreach (Workspace workspace in workspaces)
         {
             var workspaceMembers = members
                 .Where(m => m.WorkspaceId == workspace.Id)
                 .ToList();
 
-            int docCount = random.Next(2, 7);
+            var docCount = random.Next(2, 7);
 
-            for (int i = 1; i <= docCount; i++)
+            for (var i = 1; i <= docCount; i++)
             {
-                var author = workspaceMembers[random.Next(workspaceMembers.Count)];
+                WorkSpaceMember author = workspaceMembers[random.Next(workspaceMembers.Count)];
 
                 documents.Add(new Document
                 {

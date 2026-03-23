@@ -1,3 +1,5 @@
+using MyWebApi.Domain.Entities;
+
 namespace MyWebApi.App.Querying;
 
 /// <summary>
@@ -13,7 +15,6 @@ public static class IQueryExtensions
 
     extension<T>(IQueryable<T> query)
     {
-
         /// <summary>
         /// Simple pagination
         /// </summary>
@@ -30,6 +31,18 @@ public static class IQueryExtensions
                 .Take(pageSize);
         }
     }
-    
+
+
+    extension(IQueryable<Workspace> query)
+    {
+        public IQueryable<Workspace> ForUser(Guid userId)
+        {
+            return query.Where(w =>
+                w.OwnerId == userId ||
+                w.Members.Any(m => m.UserId == userId)
+            );
+        }
+    }
+
 }
 

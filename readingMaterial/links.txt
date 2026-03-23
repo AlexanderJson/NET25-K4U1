@@ -1,0 +1,5 @@
+TODO: Ge till grupp
+
+JWT INFO:
+Mer detaljer kring hur JwT fungerar, definerade lagar osv.
+https://datatracker.ietf.org/doc/html/rfc7519#section-4

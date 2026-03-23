@@ -5,13 +5,15 @@ using MyWebApi.Domain.Entities;
 
 namespace MyWebApi.App.Services;
 
-public class InviteService(IInviteRepository inviteRepo)
+public class InviteService(
+    IInviteRepository inviteRepo)
     : AService<CreateInviteDto, InviteDto, Invite>(inviteRepo)
 {
     private readonly IInviteRepository _inviteRepo = inviteRepo;
 
     protected override Invite GetEntity(CreateInviteDto dto)
     {
+
         return new Invite
         {
             Id = Guid.NewGuid(),

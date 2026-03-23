@@ -6,14 +6,17 @@ namespace MyWebApi.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class QuantumController(IQuantumService service) : ControllerBase
+public class QuantumRandomsController(IQuantumService service) : ControllerBase
 {
     private readonly IQuantumService _service = service;
 
     [HttpGet]
     public async Task<ActionResult<QuantumResponseDto>> Get()
     {
-        var response = await _service.GetRandomSeedAsync();
-        return Ok(response);
+        var result = await _service.GetRandomSeedAsync();
+        if (result == null)
+            return StatusCode(502, "No response from Quantum API.");
+
+        return Ok(result);
     }
 }

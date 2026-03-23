@@ -5,7 +5,6 @@ public class Invite
     public Guid Id { get; set; }
 
     public Guid WorkspaceId { get; set; }
-    public Workspace Workspace { get; set; } = null!;
 
     public string Email { get; set; } = string.Empty;
 

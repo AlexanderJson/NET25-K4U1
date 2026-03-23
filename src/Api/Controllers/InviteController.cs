@@ -9,9 +9,9 @@ namespace MyWebApi.Api.Controllers;
 [Route("api/[controller]")]
 public class InvitesController : ControllerBase
 {
-    private readonly IService<CreateInviteDto, InviteDto> _service;
+    private readonly ICrudService<CreateInviteDto, InviteDto> _service;
 
-    public InvitesController(IService<CreateInviteDto, InviteDto> service)
+    public InvitesController(ICrudService<CreateInviteDto, InviteDto> service)
     {
         _service = service;
     }

@@ -5,7 +5,9 @@
 
 using Infrastructure.Clients.Nasa;
 using Infrastructure.Clients.Quantum;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MyWebApi.Api.Interfaces;
 using MyWebApi.App.DTO;
 using MyWebApi.App.External.Nasa;
@@ -17,6 +19,7 @@ using MyWebApi.Infrastructure.Data;
 using MyWebApi.Infrastructure.Repositories;
 using MyWebApi.Infrastructure.Repositories.Users;
 using Scalar.AspNetCore;
+using System.Text;
 
 namespace MyWebApi;
 
@@ -26,26 +29,84 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Registers all controllers
         builder.Services.AddControllers();
+        // OpenAPI / Swagger
         builder.Services.AddOpenApi();
 
-        builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlite("Data Source=app.db"));
+        /// Configuration bindigs
+        
+        // bind metadata from appsettings to the JwTOptions
+        builder.Services.Configure<JwtOptions>(
+        builder.Configuration.GetSection("Jwt"));
+        // same with external api
+        builder.Services.Configure<QuantumOptions>(builder.Configuration.GetSection("ExternalApis:QuantumNumbers"));
 
+
+        /// JwT setup 
+
+        // Tries to read the JwT metadata (from JwTOptions) or throw error to user
+        var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
+                  ?? throw new InvalidOperationException("Jwt config missing");
+        // enables our JwT auth
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {   
+                    var keyBytes = Encoding.UTF8.GetBytes(jwt.Key);
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        // Validate that token issuer matches from options
+                        ValidateIssuer = true,
+                        ValidIssuer = jwt.Issuer,
+                        // Validates token audience (recipients of JwT)
+                        ValidateAudience = true,
+                        ValidAudience = jwt.Audience,
+                        // Here I use the same key used on sign-in to ensure the signature is valid
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
+                        // Validates token is not expired
+                        ValidateLifetime = true,
+                        /* Currently = 0 , but if JwT was issued from external service, 
+                        we could add a "grace period" to account for minimal time differences between this system and issuer system
+                        */
+                        ClockSkew = TimeSpan.FromSeconds(jwt.ClockSkewSeconds)
+                    };
+                });
+        
+        // Enables [requirement] flags
+        builder.Services.AddAuthorization();
+        // enables access to HttpContext for services. (I use it in UserContext)
+        builder.Services.AddHttpContextAccessor();
+
+
+        /// Service registrations
+        
+        // authentication service + jwt
+        builder.Services.AddScoped<IJwTService, JwTService>();
+        builder.Services.AddScoped<IAuth, AuthService>();
+    
+        // Domain services
+        builder.Services.AddScoped<ICrudService<CreateUserDto, UserDto>, UserService>();
+        builder.Services.AddScoped<ICrudService<CreateWorkspaceDto, WorkspaceDto>, WorkspaceService>();
+        builder.Services.AddScoped<ICrudService<CreateDocumentDto, DocumentDto>, DocumentService>();
+        builder.Services.AddScoped<ICrudService<CreateInviteDto, InviteDto>, InviteService>();
+
+        /// Repository registration
+        
+        // Domain Repositories
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IWorkspaceRepository, WorkspaceRepository>();
         builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
         builder.Services.AddScoped<IInviteRepository, InviteRepository>();
 
-        // Services
-        builder.Services.AddScoped<IService<CreateUserDto, UserDto>, UserService>();
-        builder.Services.AddScoped<IService<CreateWorkspaceDto, WorkspaceDto>, WorkspaceService>();
-        builder.Services.AddScoped<IService<CreateDocumentDto, DocumentDto>, DocumentService>();
-        builder.Services.AddScoped<IService<CreateInviteDto, InviteDto>, InviteService>();
-
-        builder.Services.Configure<QuantumOptions>(
-            builder.Configuration.GetSection("ExternalApis:QuantumNumbers"));
-
+        
+        /// External APIs 
+        /// (kept in its own section since additolal apis might be added)
+        
+        /// QUANTUM API
+        // Service
+        builder.Services.AddScoped<IQuantumService, QuantumService>();
+        // HttpClient
         builder.Services.AddHttpClient<IQuantumClient, QuantumClient>(client =>
         {
             var quantumBaseUrl = builder.Configuration["ExternalApis:QuantumNumbers:BaseUrl"]
@@ -54,13 +115,17 @@ public class Program
             client.BaseAddress = new Uri(quantumBaseUrl);
         });
 
-        builder.Services.AddScoped<IQuantumService, QuantumService>();
 
-        builder.Services.AddScoped<ISentryService, SentryService>();
-        builder.Services.AddHttpClient<ISentryClient, SentryClient>(client =>
-        {
-            client.BaseAddress = new Uri("https://ssd-api.jpl.nasa.gov/");
-        });
+
+        /// DATABASE CONFIG
+   
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlite(
+                builder.Configuration.GetConnectionString("Default")
+                ?? throw new InvalidOperationException("Missing connection string: Default"))
+            );
+        
+        
 
         var app = builder.Build();
 
@@ -68,11 +133,12 @@ public class Program
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            db.Database.EnsureDeleted();
+            //db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
 
-            Seed.SeedAll(db);        
+            //Seed.SeedAll(db);
         }
+        
 
         if (app.Environment.IsDevelopment())
         {
@@ -80,11 +146,13 @@ public class Program
 
             app.MapScalarApiReference(options =>
             {
-                options.WithTitle("My API")
+                options.WithTitle("DEV API ")
                        .WithTheme(ScalarTheme.Moon);
             });
         }
 
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.MapControllers();
         app.Run();
     }

@@ -4,7 +4,7 @@ using MyWebApi.App.Exceptions;
 using MyWebApi.App.Querying;
 namespace MyWebApi.App.Abstracts;
 
-public abstract class AService<TPostDto, TGetDto, TEntity> : IService<TPostDto, TGetDto>
+public abstract class AService<TPostDto, TGetDto, TEntity> : ICrudService<TPostDto, TGetDto>
 {
     protected readonly ICrudRepository<TEntity> _repo;
     protected AService(ICrudRepository<TEntity> repo)

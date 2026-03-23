@@ -9,9 +9,9 @@ namespace MyWebApi.Api.Controllers;
 [Route("api/[controller]")]
 public class DocumentsController : ControllerBase
 {
-    private readonly IService<CreateDocumentDto, DocumentDto> _service;
+    private readonly ICrudService<CreateDocumentDto, DocumentDto> _service;
 
-    public DocumentsController(IService<CreateDocumentDto, DocumentDto> service)
+    public DocumentsController(ICrudService<CreateDocumentDto, DocumentDto> service)
     {
         _service = service;
     }
