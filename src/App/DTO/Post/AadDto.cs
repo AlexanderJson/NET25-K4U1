@@ -7,4 +7,7 @@ public class AadDto
     // if its 0 = no max views.
     public int MaxViews {get; set;} = 0;
     public bool RequiresPassword {get;set;}
+
+    // temporary, will fix later
+    public Guid OwnerId {get; set;}
 }

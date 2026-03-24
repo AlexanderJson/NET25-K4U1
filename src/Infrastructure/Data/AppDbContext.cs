@@ -6,10 +6,7 @@ namespace MyWebApi.Infrastructure.Data;
 public class AppDbContext : DbContext
 {
     public DbSet<User> Users => Set<User>();
-    public DbSet<Workspace> Workspaces => Set<Workspace>();
-    public DbSet<Document> Documents => Set<Document>();
-    public DbSet<WorkSpaceMember> WorkspaceMembers => Set<WorkSpaceMember>();
-    public DbSet<Invite> Invites => Set<Invite>();
+    public DbSet<Secret> Secrets => Set<Secret>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -35,90 +32,41 @@ public class AppDbContext : DbContext
             entity.Property(u => u.HashedPassword)
                 .IsRequired();
 
-            entity.HasMany(u => u.OwnedWorkspaces)
-                .WithOne(w => w.Owner)
-                .HasForeignKey(w => w.OwnerId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            entity.HasMany(u => u.WorkspaceMemberships)
-                .WithOne(wm => wm.User)
-                .HasForeignKey(wm => wm.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasMany(u => u.CreatedDocuments)
-                .WithOne(d => d.CreatedBy)
-                .HasForeignKey(d => d.CreatedById)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
-
-        modelBuilder.Entity<Workspace>(entity =>
-        {
-            entity.HasKey(w => w.Id);
-
-            entity.Property(w => w.Name)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.Property(w => w.Description)
-                .HasMaxLength(500);
-
-            entity.HasMany(w => w.Documents)
-                .WithOne(d => d.Workspace)
-                .HasForeignKey(d => d.WorkspaceId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasMany(w => w.Members)
-                .WithOne(wm => wm.Workspace)
-                .HasForeignKey(wm => wm.WorkspaceId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasMany(w => w.Invites)
-                .WithOne(i => i.Workspace)
-                .HasForeignKey(i => i.WorkspaceId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<Document>(entity =>
-        {
-            entity.HasKey(d => d.Id);
-
-            entity.Property(d => d.Title)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.Property(d => d.Content)
-                .IsRequired()
-                .HasMaxLength(5000);
-        });
-
-        modelBuilder.Entity<WorkSpaceMember>(entity =>
-        {
-            entity.HasKey(wm => wm.Id);
-
-            entity.Property(wm => wm.Role)
-                .IsRequired()
-                .HasMaxLength(20);
-
-            entity.HasIndex(wm => new { wm.WorkspaceId, wm.UserId })
+            entity.HasIndex(u => u.Username)
                 .IsUnique();
+
+            entity.HasIndex(u => u.Email)
+                .IsUnique();
+
+            entity.HasMany(u => u.Secrets)
+                .WithOne(s => s.Owner)
+                .HasForeignKey(s => s.OwnerId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<Invite>(entity =>
+        modelBuilder.Entity<Secret>(entity =>
         {
-            entity.HasKey(i => i.Id);
+            entity.HasKey(s => s.Id);
 
-            entity.Property(i => i.Email)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.Property(i => i.Role)
-                .IsRequired()
-                .HasMaxLength(20);
-
-            entity.Property(i => i.Token)
+            entity.Property(s => s.HashedAccessToken)
                 .IsRequired();
 
-            entity.HasIndex(i => i.Token)
+            entity.Property(s => s.EncryptedContent)
+                .IsRequired();
+
+            entity.Property(s => s.CurrentViews)
+                .IsRequired();
+
+            entity.Property(s => s.ExpiresAt)
+                .IsRequired();
+
+            entity.Property(s => s.CreatedAt)
+                .IsRequired();
+
+            entity.Property(s => s.RequiresPassword)
+                .IsRequired();
+
+            entity.HasIndex(s => s.HashedAccessToken)
                 .IsUnique();
         });
     }

@@ -1,91 +1,101 @@
+using Microsoft.Extensions.Options;
 using MyWebApi.Api.Interfaces;
-using MyWebApi.App.Abstracts;
 using MyWebApi.App.DTO;
-using MyWebApi.Domain.Entities;
+using MyWebApi.App.Options;
 
 namespace MyWebApi.App.Services;
 
-public interface ISecretService 
-{
-    
-}
-public class SecretService(IInviteRepository inviteRepo) : ISecretService;
-{
-    private readonly IInviteRepository _inviteRepo = inviteRepo;
 
-    protected override Invite GetEntity(CreateInviteDto dto)
+
+public class SecretService(
+    ITokenService tokenService,
+    IOptions<SecretOptions> options,
+    ISecretRepository repo
+    ) : ISecretService
+{
+    private readonly ITokenService _tokenService = tokenService;
+    private readonly ISecretRepository _repo = repo;
+
+    private readonly byte[] _key = Convert.FromBase64String(options.Value.Key);
+
+    public CreatedSecretDto CreateSecret(CreateSecretDto dto)
     {
+        ArgumentNullException.ThrowIfNull(dto);
+        if (string.IsNullOrWhiteSpace(dto.Content))
+            throw new ArgumentException("Content is required.");
 
-        return new Invite
+        if (dto.MaxViews is <= 0)
+            throw new ArgumentException("MaxViews must be greater than 0 when provided.");
+
+        DateTime expiresAt = dto.ExpiresAt.ToUniversalTime();
+
+        if (expiresAt <= DateTime.UtcNow)
+            throw new ArgumentException("ExpiresAt must be in the future.");
+
+        var secretId = Guid.NewGuid();
+        var accessToken = _tokenService.GenerateToken();
+        var aadDto = new AadDto
         {
-            Id = Guid.NewGuid(),
-            WorkspaceId = dto.WorkspaceId,
-            Email = dto.Email,
-            Role = dto.Role,
-            Token = CreateUniqueToken(),
+            SecretId = secretId,
+            ExpiresAt = expiresAt,
+            MaxViews = dto.MaxViews ?? 0,
+            RequiresPassword = false
+        };
+        var aad = AesGcmUtils.GenerateAad(aadDto);
+        var encryptedContent = AesGcmUtils.Encrypt(dto.Content, _key, aad);
+        var secret = new Secret
+        {
+            Id = secretId,
+            HashedAccessToken = _tokenService.HashToken(accessToken),
+            EncryptedContent = encryptedContent,
             CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddDays(7),
-            IsUsed = false
+            ExpiresAt = expiresAt,
+            MaxViews = dto.MaxViews,
+            CurrentViews = 0,
+            RequiresPassword = false
+        };
+        _repo.Add(secret);
+        return new CreatedSecretDto
+        {
+            Id = secret.Id,
+            AccessToken = accessToken,
+            ExpiresAt = secret.ExpiresAt,
+            MaxViews = secret.MaxViews
         };
     }
 
-    protected override InviteDto ReturnDto(Invite entity)
+    public SecretDto GetByToken(string accessToken)
     {
-        return new InviteDto
+        ArgumentException.ThrowIfNullOrWhiteSpace(accessToken);
+        var accessTokenHash = _tokenService.HashToken(accessToken);
+        Secret? secret = _repo.GetByToken(accessTokenHash) ?? throw new KeyNotFoundException("Secret not found."); ;
+        //TODO gör riktig delete sen
+        if (secret.ExpiresAt <= DateTime.UtcNow)
+            throw new InvalidOperationException("Secret has expired.");
+        //TODO flytta check till entity
+        if (secret.MaxViews.HasValue && secret.CurrentViews >= secret.MaxViews.Value)
+            throw new InvalidOperationException("Secret is no longer available.");
+
+        var aad = AesGcmUtils.GenerateAad(new AadDto
         {
-            Id = entity.Id,
-            WorkspaceId = entity.WorkspaceId,
-            Email = entity.Email,
-            Role = entity.Role,
-            Token = entity.Token,
-            ExpiresAt = entity.ExpiresAt,
-            IsUsed = entity.IsUsed,
-            CreatedAt = entity.CreatedAt
+            SecretId = secret.Id,
+            ExpiresAt = secret.ExpiresAt,
+            MaxViews = secret.MaxViews ?? 0,
+            RequiresPassword = secret.RequiresPassword
+        });
+
+        var decryptedContent = AesGcmUtils.Decrypt(secret.EncryptedContent, _key, aad);
+        secret.CurrentViews += 1;
+        _repo.Update(secret);
+        return new SecretDto
+        {
+            SecretId = secret.Id,
+            Content = decryptedContent,
+            ExpiresAt = secret.ExpiresAt,
+            MaxViews = secret.MaxViews,
+            ViewCount = secret.CurrentViews
         };
-    }
-
-    protected override void ApplyUpdate(Invite entity, CreateInviteDto dto)
-    {
-        if (dto.WorkspaceId != Guid.Empty)
-            entity.WorkspaceId = dto.WorkspaceId;
-
-        if (!string.IsNullOrWhiteSpace(dto.Email))
-            entity.Email = dto.Email;
-
-        if (!string.IsNullOrWhiteSpace(dto.Role))
-            entity.Role = dto.Role;
-    }
-
-    protected override void ValidateArgs(CreateInviteDto dto)
-    {
-        if (dto == null)
-            throw new ArgumentException("DTO cannot be null");
-
-        if (dto.WorkspaceId == Guid.Empty)
-            throw new ArgumentException("WorkspaceId is required.");
-
-        if (string.IsNullOrWhiteSpace(dto.Email))
-            throw new ArgumentException("Email is required.");
-
-        if (string.IsNullOrWhiteSpace(dto.Role))
-            throw new ArgumentException("Role is required.");
-    }
-
-    protected override IQueryable<Invite> ApplyOrdering(IQueryable<Invite> query)
-    {
-        return query.OrderByDescending(i => i.CreatedAt);
-    }
-
-    private string CreateUniqueToken()
-    {
-        string token;
-
-        do
-        {
-            token = Guid.NewGuid().ToString("N");
-        }
-        while (_inviteRepo.TokenExists(token));
-
-        return token;
     }
 }
+
+

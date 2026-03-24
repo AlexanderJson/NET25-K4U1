@@ -3,20 +3,18 @@
 // TODO vtikgit : fixa namespaces
 // TODO + kolla .https filerna
 
-using Infrastructure.Clients.Nasa;
 using Infrastructure.Clients.Quantum;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyWebApi.Api.Interfaces;
 using MyWebApi.App.DTO;
-using MyWebApi.App.External.Nasa;
 using MyWebApi.App.External.Quantum;
 using MyWebApi.App.Interfaces;
+using MyWebApi.App.Jwt.interfaces;
 using MyWebApi.App.Options;
 using MyWebApi.App.Services;
 using MyWebApi.Infrastructure.Data;
-using MyWebApi.Infrastructure.Repositories;
 using MyWebApi.Infrastructure.Repositories.Users;
 using Scalar.AspNetCore;
 using System.Text;
@@ -41,6 +39,9 @@ public class Program
         builder.Configuration.GetSection("Jwt"));
         // same with external api
         builder.Services.Configure<QuantumOptions>(builder.Configuration.GetSection("ExternalApis:QuantumNumbers"));
+
+        builder.Services.Configure<SecretOptions>(
+            builder.Configuration.GetSection("SecretEncryption"));
 
 
         /// JwT setup 
@@ -84,20 +85,18 @@ public class Program
         // authentication service + jwt
         builder.Services.AddScoped<IJwTService, JwTService>();
         builder.Services.AddScoped<IAuth, AuthService>();
-    
+        builder.Services.AddScoped<JwtGenerator>();
         // Domain services
         builder.Services.AddScoped<ICrudService<CreateUserDto, UserDto>, UserService>();
-        builder.Services.AddScoped<ICrudService<CreateWorkspaceDto, WorkspaceDto>, WorkspaceService>();
-        builder.Services.AddScoped<ICrudService<CreateDocumentDto, DocumentDto>, DocumentService>();
-        builder.Services.AddScoped<ICrudService<CreateInviteDto, InviteDto>, InviteService>();
+        builder.Services.AddScoped<ISecretService, SecretService>();
+        builder.Services.AddScoped<ITokenService, TokenService>();
+
 
         /// Repository registration
         
         // Domain Repositories
         builder.Services.AddScoped<IUserRepository, UserRepository>();
-        builder.Services.AddScoped<IWorkspaceRepository, WorkspaceRepository>();
-        builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
-        builder.Services.AddScoped<IInviteRepository, InviteRepository>();
+        builder.Services.AddScoped<ISecretRepository, SecretRepository>();
 
         
         /// External APIs 
@@ -149,11 +148,13 @@ public class Program
                 options.WithTitle("DEV API ")
                        .WithTheme(ScalarTheme.Moon);
             });
-        }
 
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
         app.Run();
     }
+}
+
+
 }

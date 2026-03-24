@@ -2,7 +2,7 @@ using MyWebApi.Domain.Entities;
 using MyWebApi.Domain.Enums;
 
 namespace MyWebApi.Infrastructure.Data;
-
+/*
 public static class Seed
 {
     public static void SeedAll(AppDbContext db)
@@ -184,3 +184,4 @@ public static class Seed
         return invites;
     }
 }
+*/

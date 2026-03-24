@@ -1,17 +1,13 @@
 namespace MyWebApi.App.DTO;
 
+/// <summary>
+/// returned when creating secret initially
+/// </summary>
 public class CreatedSecretDto
 {
     public Guid Id { get; set; }
-    public string AccessLink {get; set;} = string.Empty;
-    public bool RequiresPassword { get; set; }
-    
-    public bool HasMaxViews => MaxViews >= 1;
+    public string AccessToken {get; set;} = string.Empty;
     public int? MaxViews { get; set; }
-    public DateTime ExpiresAtUtc { get; set; }
-
-    public DateTime CreatedAtUtc { get; set; }
-
-
+    public DateTime ExpiresAt { get; set; }
 
 }
