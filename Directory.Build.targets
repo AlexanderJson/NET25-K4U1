@@ -1,0 +1,85 @@
+<!-- I apply my targets here. This is a way to make sure our project are in-sync with our CI/CD pipeline before pushing anything -->
+
+    <!-- BeforeTargets="Build" = runs the check BEFORE building the project -->
+    <!-- AfterTargets="Build" = runs the check AFTER building the project -->
+
+    <!-- possible targets: 
+        Test (when running dotnet test it would run)
+        Clean
+        Rebuild
+        Publish
+        Build
+        Restore
+     -->
+
+<Project>
+
+
+
+  <Target Name="BuildInfo" AfterTargets="Build">
+        <Message Text="Built $(MSBuildProjectName) ($(Configuration)) targeting $(TargetFramework)" Importance="high" />
+  </Target>
+
+<!-- This makes sure theres no vulnerabilities on packages  -->
+  <Target Name="SecurityAudit" BeforeTargets="Build" Condition="'$(CI)' == 'true'">
+    <Exec Command="dotnet list package --vulnerable" />
+    <Message Text="%1B[92mSecurity Audit: Package vulnerability scan completed for $(MSBuildProjectName).%1B[0m" Importance="high" />
+  </Target>
+
+<!-- Since we have several .csproj I included a rule here to make sure all projects use the same language and framework as the repos build.props file -->
+
+<Target Name="EnforceRepoStandards" BeforeTargets="Build">
+  
+  <Error Condition="'$(TargetFramework)' != '$(RequiredTargetFramework)' AND '$(IsAnalyzerProject)' != 'true'"
+         Text="Standard Violation: '$(MSBuildProjectName)' uses '$(TargetFramework)'. Repo requires '$(RequiredTargetFramework)'." />
+
+  <Error Condition="'$(LangVersion)' != '$(RequiredLangVersion)' AND '$(LangVersion)' != 'latest' AND '$(IsAnalyzerProject)' != 'true'"
+         Text="Standard Violation: '$(MSBuildProjectName)' uses C# version '$(LangVersion)'. Repo requires C# '$(RequiredLangVersion)' to support Extension Blocks." />
+<Message Text="%1B[93mEnforceRepoStandards: Framework, language and packages are up-to-date and matches!!!!.%1B[0m" Importance="high" />
+</Target>
+
+<!--  Makes sure no secrets are committed to git ever -->
+<Target Name="NoSecrets" BeforeTargets="Build">
+  <Error Condition="Exists('secrets.json')"
+         Text="Secrets file must not be committed!" />
+  <Message Text="%1B[93mSecret Scanner: No local secrets.json detected in project root.%1B[0m" Importance="high" />
+</Target>
+
+<!-- this makes sure test packages are only used inside test projects -->
+  <Target Name="NoTestPackagesInNonTestProjects" BeforeTargets="Build">
+    <Error Condition="
+      '$(IsTestProject)' != 'true' AND
+      (
+        @(PackageReference->AnyHaveMetadataValue('Identity','xunit')) OR
+        @(PackageReference->AnyHaveMetadataValue('Identity','Microsoft.NET.Test.Sdk')) OR
+        @(PackageReference->AnyHaveMetadataValue('Identity','coverlet.collector'))
+      )
+    "
+    Text="Test packages are only allowed in test projects!" />
+  </Target>
+
+<!-- this makes sure we get error if test projects dont contain code!! -->
+  <Target Name="EnsureTestsExist" AfterTargets="Build">
+    <Error Condition="'$(IsTestProject)' == 'true' AND '@(Compile)' == ''"
+           Text="Test project has no test files!" />
+  </Target>
+
+
+
+<!-- This makes sure  CI builds use Release configuration -->  
+<Target Name="NoDebugInCI" BeforeTargets="Build">
+    <Error Condition="'$(CI)' == 'true' AND '$(Configuration)' != 'Release'"
+           Text="CI must run Release builds only!" />
+  </Target>
+
+
+
+<Target Name="RunProjectStats" BeforeTargets="Build">
+  <Exec Command='powershell -ExecutionPolicy Bypass -File "$(MSBuildThisFileDirectory)scripts\stats.ps1"' />
+  <Message Text="%1B[95mStatistics: Project metadata updated via stats.ps1.%1B[0m" Importance="high" />
+</Target>
+
+
+</Project>
+
+ 

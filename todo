@@ -1,0 +1,23 @@
+- [ ]  Designa ditt API enligt REST-principer. Använd substantiv i plural (t.ex. `/api/products`) och korrekta HTTP-metoder (GET, POST, PUT, DELETE)
+- [ ]  Exponera aldrig dina databasentiteter direkt mot klienten. Använd DTO:er (Data Transfer Objects) för både inkommande och utgående data
+- [ ]  Gör det möjligt att filtrera listor i dina GET-endpoints via query parameters (t.ex. `?category=electronics&minPrice=100`)
+- [ ]  Validera inkommande data strikt via Data Annotations (t.ex. `[Required]`, `[StringLength]`) på dina DTO:er, så att felaktiga anrop returnerar 400 Bad Request
+- [ ]  Sätt upp en specifik CORS-policy via en Extension Method (använd inte `AllowAnyOrigin`) som begränsar vilka klienter som får anropa ditt API
+- [ ]  Inga lösenord eller API-nycklar får hårdkodas. Använd *User Secrets* (i utvecklingsmiljö) eller miljövariabler för lagring
+- [ ]  Implementera offset-baserad paginering (t.ex. `?page=1&pageSize=20`) på anrop som returnerar kollektioner. Inkludera metadata om sidorna i responsen
+- [ ]  Skydda ditt API mot överbelastning genom att implementera Rate Limiting (t.ex. *Fixed Window Limiter*) via ASP.NET Cores inbyggda middleware
+- [ ]  Applicera In-memory caching, Redis, eller `HybridCache` på minst en resurskrävande GET-endpoint för att minska antalet databasanrop
+- [ ]  Integrera ditt API mot minst en extern tjänst. Använd `IHttpClientFactory` (gärna "Typed Clients") för att undvika problem med "socket exhaustion"
+- [ ]  Inkludera nödvändig autentisering (t.ex. API-nyckel i en header) vid det externa anropet och implementera felhantering för nätverksfel (exempelvis via `EnsureSuccessStatusCode`
+
+# Din inlämning
+
+- Skicka in en textfil som innehåller en länk till ditt Github-repo i Canvas
+- Kom ihåg att göra repot public eller bjud in utbildaren som collaborator: `m-lindberg`
+- **Ditt repo måste innehålla en tydlig readme.md med:**
+    
+    1. Korta instruktioner för hur man bygger och kör ditt API lokalt
+    
+    2. Instruktioner för att sätta upp eventuella *User Secrets* som krävs (t.ex. "Skapa en secret med nyckeln `WeatherApiKey`")
+    
+    3. **Prestandamätning:** Ett stycke där du redovisar svarstiderna på din cachade endpoint. Jämför svarstiden i millisekunder vid en "Cache Miss" (första anropet mot databas/externt API) med en "Cache Hit" (när datan hämtas direkt från cachen)

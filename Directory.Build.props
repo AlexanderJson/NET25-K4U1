@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <!-- I made these dynamic so they can work together with their targets -->
+    <RequiredTargetFramework>net10.0</RequiredTargetFramework>
+    <TargetFramework>$(RequiredTargetFramework)</TargetFramework>
+
+    <RequiredLangVersion>14.0</RequiredLangVersion>
+    <LangVersion>$(RequiredLangVersion)</LangVersion>
+
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+</Project>
