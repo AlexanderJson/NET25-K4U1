@@ -13,17 +13,9 @@ public class UserService(IUserRepository userRepo)
 
     protected override void ApplyUpdate(User entity, CreateUserDto dto)
     {
-        ArgumentNullException.ThrowIfNull(dto.Username);
-        ArgumentNullException.ThrowIfNull(dto.Email);
-        
-        if (!string.IsNullOrWhiteSpace(dto.Username))
-            entity.Username = dto.Username;
-
-        if (!string.IsNullOrWhiteSpace(dto.Email))
-            entity.Email = dto.Email;
-
-        if (!string.IsNullOrWhiteSpace(dto.Password))
-            entity.HashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+        entity.Username = dto.Username;
+        entity.Email = dto.Email;
+        entity.HashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
     }
 
     protected override UserDto ReturnDto(User entity)

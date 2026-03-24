@@ -48,8 +48,7 @@ public abstract class AService<TPostDto, TGetDto, TEntity> : ICrudService<TPostD
     {
         _validateId(id);
         ValidateArgs(dto);
-        var entity = _repo.GetById(id) ?? throw new NotFoundException($"{typeof(TEntity).Name} not found");
-        ValidateUpdate(entity,dto);
+        var entity = _repo.GetById(id);
         ApplyUpdate(entity,dto);
         _repo.Update(entity);
         return ReturnDto(entity);

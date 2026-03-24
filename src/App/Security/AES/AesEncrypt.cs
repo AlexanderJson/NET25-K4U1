@@ -31,23 +31,32 @@ public class AesGcmUtils
 
             // Creates the nonce (a 12 byte long vector with random values)
             var Nonce = new byte[_nonceLen];
+            // Generates higher entropy random numbers
+            RandomNumberGenerator.Fill(Nonce);
+
             // Creates the tag vector
             var Tag = new byte[_tagLen];
 
-            // Here I use the "using"-keyword because it releases the resources right after using them!
-            using var AesGcm = new AesGcm(key, _tagLen);
-            // Converts the content into a vector fo bytes
+            // Converts our plaintext to bytes
             var ContentBytes = Encoding.UTF8.GetBytes(content);
-            // creates a empty byte[] same size of contentBytes
+            // this will be used for the ciphertext
             var CipherContent = new byte[ContentBytes.Length];
 
-            // Now we create the cipher block from content, and the GCM auth tag
-            AesGcm.Encrypt(Nonce, ContentBytes, CipherContent, Tag);
+            // using released disposes the resources after its done
+            using var AesGcm = new AesGcm(key, _tagLen);
 
-            // Creates a matrix with length of tag, nonce, ciphercontent and fill with data
+
+            // Now we run the encryption to generate our encrypted content + authentication tag
+            AesGcm.Encrypt(Nonce, ContentBytes, CipherContent, Tag);
+            /* 
+            AesGcm returns three outputs (nonce, ciphercontent, tag).
+            So to return the full encrypted data, we first have to 
+            make an array the size of these combined, then copy them into 
+            that array in the order theyre supposd to be. 
+            */
             var EncryptedContent = new byte[Nonce.Length + Tag.Length + CipherContent.Length];
             Buffer.BlockCopy(Nonce, 0, EncryptedContent,0, Nonce.Length);
-            Buffer.BlockCopy(Nonce, 0, EncryptedContent,0, Nonce.Length + Tag.Length);
+            Buffer.BlockCopy(Tag, 0, EncryptedContent, Nonce.Length, Tag.Length);            
             Buffer.BlockCopy(CipherContent, 0, EncryptedContent, Nonce.Length + Tag.Length, CipherContent.Length);
             return Convert.ToBase64String(EncryptedContent);
         }
@@ -58,11 +67,18 @@ public class AesGcmUtils
         }            
     }
 
-    public static string Decrypt(string encrypted_content, byte[] key)
+    public static string Decrypt(string encryptedContent, byte[] key)
     {
         try
         {
-            var data = Convert.FromBase64String(encrypted_content);
+            ArgumentNullException.ThrowIfNull(encryptedContent);
+            ArgumentNullException.ThrowIfNull(key);
+            if (key.Length != 32)
+                throw new ArgumentException("Incorrect key size!");
+
+            var data = Convert.FromBase64String(encryptedContent);
+            if (data.Length < _nonceLen + _tagLen)
+                throw new ArgumentException("Encrypted content is too short.");
             // Creates a copy of the first 12 bytes
             var Nonce = new byte[_nonceLen];
             Buffer.BlockCopy(data, 0, Nonce,0, Nonce.Length);
@@ -75,10 +91,10 @@ public class AesGcmUtils
             var CipherLen = data.Length - _nonceLen - _tagLen;
             var CipherData = new byte[CipherLen];
             Buffer.BlockCopy(data, _nonceLen + _tagLen, CipherData,0, CipherLen);
+            var DecryptedContentBytes = new byte[CipherLen];
 
             
             using var aesGcm = new AesGcm(key, _tagLen);
-            var DecryptedContentBytes = new byte[CipherLen];
             aesGcm.Decrypt(Nonce, CipherData, Tag, DecryptedContentBytes);
             return Encoding.UTF8.GetString(DecryptedContentBytes);
         }
