@@ -12,7 +12,6 @@ namespace MyWebApi.App.Querying;
 public static class IQueryExtensions
 {
 
-
     extension<T>(IQueryable<T> query)
     {
         /// <summary>
@@ -30,19 +29,21 @@ public static class IQueryExtensions
                 .Skip(toSkip)
                 .Take(pageSize);
         }
+        
     }
 
-    /*
-    extension(IQueryable<Workspace> query)
+    extension(IQueryable<User> query)
     {
-        public IQueryable<Workspace> ForUser(Guid userId)
-        {
-            return query.Where(w =>
-                w.OwnerId == userId ||
-                w.Members.Any(m => m.UserId == userId)
-            );
-        }
+        public IQueryable<User> FilterByUsername(string? username)
+            {
+                if (string.IsNullOrWhiteSpace(username))
+                    return query;
+
+                return query.Where(u => u.Username.Contains(username));
+            }
     }
-    */
+
+
+
 }
 

@@ -15,7 +15,9 @@ public class JwtGenerator(IOptions<JwtOptions> options) : IJwtGenerator
         // I wrap the key in a SymmetricSecurityKey wrapper
         // because we are performing symmetric signing 
         var key = new SymmetricSecurityKey(bytes);
-
+    Console.WriteLine($"NOW (UTC): {DateTime.UtcNow}");
+    Console.WriteLine($"EXP: {DateTime.UtcNow.AddMinutes(_options.ExpireMinutes)}");
+Console.WriteLine($"AUDIENCE FROM OPTIONS: '{_options.Audience}'");
         var creds = new SigningCredentials
         (
             key,

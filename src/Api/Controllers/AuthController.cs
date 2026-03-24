@@ -3,7 +3,7 @@ using MyWebApi.App.DTO;
 
 
 [ApiController]
-[Route("api/auth")]
+[Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IAuth _auth;
@@ -17,6 +17,7 @@ public class AuthController : ControllerBase
     public IActionResult Login(LoginDto dto)
     {
         var token = _auth.Login(dto.Username, dto.Password);
+        
         return Ok(new { accessToken = token });
     }
     

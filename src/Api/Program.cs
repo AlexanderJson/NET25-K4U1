@@ -20,6 +20,7 @@ using MyWebApi.Infrastructure.Repositories.Users;
 using Scalar.AspNetCore;
 using System.Text;
 using MyWebApi.App.Demo;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace MyWebApi;
 
@@ -48,6 +49,22 @@ public class Program
         }
         // Registers all controllers
         builder.Services.AddControllers();
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("Demo", policy =>
+                {
+                    policy
+                        .WithOrigins(
+                            "http://localhost:3000",
+                            "http://localhost:5173",
+                            "https://localhost:3000",
+                            "https://localhost:5173"
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
+
         // OpenAPI / Swagger
         builder.Services.AddOpenApi();
 
@@ -72,8 +89,8 @@ public class Program
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {   
-                    var keyBytes = Encoding.UTF8.GetBytes(jwt.Key);
-                    options.TokenValidationParameters = new TokenValidationParameters
+                        var keyBytes = Encoding.UTF8.GetBytes(jwt.Key);
+                        options.TokenValidationParameters = new TokenValidationParameters
                     {
                         // Validate that token issuer matches from options
                         ValidateIssuer = true,
@@ -97,7 +114,22 @@ public class Program
         builder.Services.AddAuthorization();
         // enables access to HttpContext for services. (I use it in UserContext)
         builder.Services.AddHttpContextAccessor();
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.AddFixedWindowLimiter("api", opt =>
+            {
+                opt.PermitLimit = 20;
+                opt.Window = TimeSpan.FromSeconds(10);
+                opt.QueueLimit = 0;
+            });
 
+            options.AddFixedWindowLimiter("strict", opt =>
+            {
+                opt.PermitLimit = 5;
+                opt.Window = TimeSpan.FromSeconds(10);
+                opt.QueueLimit = 0;
+            });
+        });
 
         /// Service registrations
         
@@ -109,7 +141,7 @@ public class Program
         builder.Services.AddScoped<ICrudService<CreateUserDto, UserDto>, UserService>();
         builder.Services.AddScoped<ISecretService, SecretService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
-
+        builder.Services.AddScoped<IUserService<CreateUserDto, UserDto>,UserService>();
         builder.Services.AddScoped<UserContext>(); 
         /// Repository registration
         
@@ -174,8 +206,11 @@ public class Program
                        .WithTheme(ScalarTheme.Moon);
             });
         }
+        app.UseHttpsRedirection();
+        app.UseCors("Demo");
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseRateLimiter();
         app.MapControllers();
         app.Run();
 }

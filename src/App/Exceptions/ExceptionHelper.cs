@@ -5,16 +5,28 @@ public static class ExceptionHelper
     public static void ThrowIfUsernameEmptyOrWhiteSpace(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Input cannot be empty or whitespace.", nameof(name));
+            throw new ArgumentException("Username cannot be empty or whitespace." );
     }
+
+    public static void ThrowIfPasswordEmptyOrWhiteSpace(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Password cannot be empty or whitespace.");
+    }
+
+    public static void ThrowIfStringsDontMatch(string a, string b)
+    {
+        if (!a.Equals(b))
+            throw new ArgumentException($"{nameof(a)} is incorrect!");
+    }
+
 
     public static void ThrowIfEmailEmptyOrWhiteSpace(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Input cannot be empty or whitespace.", nameof(name));
+            throw new ArgumentException("Input cannot be empty or whitespace." );
     }
     
-
     public static void ThrowIfZero(int value, string paramName)
     {
         if (value == 0)

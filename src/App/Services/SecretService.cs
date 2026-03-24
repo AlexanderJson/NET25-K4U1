@@ -16,6 +16,7 @@ public class SecretService(
     private readonly ITokenService _tokenService = tokenService;
     private readonly ISecretRepository _repo = repo;
 
+    // fetches key from options -> config 
     private readonly byte[] _key = Convert.FromBase64String(options.Value.Key);
 
     public CreatedSecretDto CreateSecret(CreateSecretDto dto)

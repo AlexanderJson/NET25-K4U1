@@ -1,187 +1,130 @@
+using System.Security.Cryptography;
+using System.Text;
 using MyWebApi.Domain.Entities;
-using MyWebApi.Domain.Enums;
 
 namespace MyWebApi.Infrastructure.Data;
-/*
+
 public static class Seed
 {
     public static void SeedAll(AppDbContext db)
     {
+        Console.WriteLine("[SEED] SeedAll started.");
 
-        var random = new Random();
-        List<User> users = SeedUsers();
-        db.Users.AddRange(users);
-        db.SaveChanges();
-
-        List<Workspace> workspaces = SeedWorkspaces(users, random);
-        db.Workspaces.AddRange(workspaces);
-        db.SaveChanges();
-
-        List<WorkSpaceMember> members = SeedWorkspaceMembers(workspaces, users, random);
-        db.WorkspaceMembers.AddRange(members);
-        db.SaveChanges();
-
-        List<Document> documents = SeedDocuments(workspaces, members, random);
-        db.Documents.AddRange(documents);
-        db.SaveChanges();
-
-        List<Invite> invites = SeedInvites(workspaces, random);
-        db.Invites.AddRange(invites);
-        db.SaveChanges();
-    }
-
-    private static List<User> SeedUsers()
-    {
-        var users = new List<User>();
-
-        for (var i = 1; i <= 50; i++)
+        if (db.Users.Any())
         {
-            users.Add(new User
+            Console.WriteLine("[SEED] Users already exist. Skipping seed.");
+            return;
+        }
+
+        var demoUser = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "DemoUser1",
+            Email = "demo1@test.com",
+            HashedPassword = BCrypt.Net.BCrypt.HashPassword("123456")
+        };
+
+        Console.WriteLine($"[SEED] Creating demo user:");
+        Console.WriteLine($"       Username: {demoUser.Username}");
+        Console.WriteLine($"       Email: {demoUser.Email}");
+        Console.WriteLine($"       Id: {demoUser.Id}");
+
+        db.Users.Add(demoUser);
+
+        var rawTokens = new[]
+        {
+            "demo-token-1",
+            "demo-token-2",
+            "demo-token-3",
+            "demo-token-4",
+            "demo-token-5"
+        };
+
+        var now = DateTime.UtcNow;
+
+        var secrets = new List<Secret>
+        {
+            new Secret
             {
                 Id = Guid.NewGuid(),
-                Username = $"user{i}",
-                Email = $"user{i}@mail.com",
-                HashedPassword = BCrypt.Net.BCrypt.HashPassword("Password123!"),
-                CreatedAt = DateTime.UtcNow.AddDays(-i)
-            });
-        }
-
-        return users;
-    }
-
-    private static List<Workspace> SeedWorkspaces(List<User> users, Random random)
-    {
-        var workspaces = new List<Workspace>();
-
-        for (var i = 1; i <= 20; i++)
-        {
-            User owner = users[random.Next(users.Count)];
-
-            workspaces.Add(new Workspace
+                OwnerId = demoUser.Id,
+                EncryptedContent = "demo-encrypted-1",
+                HashedAccessToken = SHA256.HashData(Encoding.UTF8.GetBytes(rawTokens[0])),
+                ExpiresAt = now.AddHours(1),
+                MaxViews = 1,
+                CurrentViews = 0,
+                RequiresPassword = false,
+                CreatedAt = now
+            },
+            new Secret
             {
                 Id = Guid.NewGuid(),
-                Name = $"Workspace {i}",
-                Description = $"Mocked workspace {i} for testing documents.",
-                OwnerId = owner.Id,
-                CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 60))
-            });
-        }
-
-        return workspaces;
-    }
-
-    private static List<WorkSpaceMember> SeedWorkspaceMembers(List<Workspace> workspaces, List<User> users, Random random)
-    {
-        var members = new List<WorkSpaceMember>();
-
-        foreach (Workspace workspace in workspaces)
-        {
-            var usedUserIds = new HashSet<Guid>();
-
-             members.Add(new WorkSpaceMember
+                OwnerId = demoUser.Id,
+                EncryptedContent = "demo-encrypted-2",
+                HashedAccessToken = SHA256.HashData(Encoding.UTF8.GetBytes(rawTokens[1])),
+                ExpiresAt = now.AddHours(2),
+                MaxViews = 3,
+                CurrentViews = 0,
+                RequiresPassword = true,
+                CreatedAt = now
+            },
+            new Secret
             {
                 Id = Guid.NewGuid(),
-                WorkspaceId = workspace.Id,
-                UserId = workspace.OwnerId,
-                Role = WorkspaceRole.Admin,
-                JoinedAt = workspace.CreatedAt
-            });
-
-            usedUserIds.Add(workspace.OwnerId);
-
-            int extraMembers = random.Next(2, 8);
-
-            while (usedUserIds.Count < extraMembers + 1)
+                OwnerId = demoUser.Id,
+                EncryptedContent = "demo-encrypted-3",
+                HashedAccessToken = SHA256.HashData(Encoding.UTF8.GetBytes(rawTokens[2])),
+                ExpiresAt = now.AddDays(1),
+                MaxViews = null,
+                CurrentViews = 0,
+                RequiresPassword = false,
+                CreatedAt = now
+            },
+            new Secret
             {
-                var user = users[random.Next(users.Count)];
-
-                if (usedUserIds.Contains(user.Id))
-                    continue;
-
-                members.Add(new WorkSpaceMember
-                {
-                    Id = Guid.NewGuid(),
-                    WorkspaceId = workspace.Id,
-                    UserId = user.Id,
-                    Role = random.Next(0, 2) == 0 ? WorkspaceRole.Viewer : WorkspaceRole.Editor,
-                    JoinedAt = workspace.CreatedAt.AddDays(random.Next(0, 10))
-                });
-
-                usedUserIds.Add(user.Id);
+                Id = Guid.NewGuid(),
+                OwnerId = demoUser.Id,
+                EncryptedContent = "demo-encrypted-4",
+                HashedAccessToken = SHA256.HashData(Encoding.UTF8.GetBytes(rawTokens[3])),
+                ExpiresAt = now.AddMinutes(30),
+                MaxViews = 2,
+                CurrentViews = 1,
+                RequiresPassword = false,
+                CreatedAt = now
+            },
+            new Secret
+            {
+                Id = Guid.NewGuid(),
+                OwnerId = demoUser.Id,
+                EncryptedContent = "demo-encrypted-5",
+                HashedAccessToken = SHA256.HashData(Encoding.UTF8.GetBytes(rawTokens[4])),
+                ExpiresAt = now.AddDays(7),
+                MaxViews = 10,
+                CurrentViews = 0,
+                RequiresPassword = true,
+                CreatedAt = now
             }
-        }
+        };
 
-        return members;
-    }
-
-    private static List<Document> SeedDocuments(List<Workspace> workspaces, List<WorkSpaceMember> members, Random random)
-    {
-        var documents = new List<Document>();
-
-        foreach (Workspace workspace in workspaces)
+        for (var i = 0; i < secrets.Count; i++)
         {
-            var workspaceMembers = members
-                .Where(m => m.WorkspaceId == workspace.Id)
-                .ToList();
+            var secret = secrets[i];
 
-            var docCount = random.Next(2, 7);
-
-            for (var i = 1; i <= docCount; i++)
-            {
-                WorkSpaceMember author = workspaceMembers[random.Next(workspaceMembers.Count)];
-
-                documents.Add(new Document
-                {
-                    Id = Guid.NewGuid(),
-                    WorkspaceId = workspace.Id,
-                    CreatedById = author.UserId,
-                    Title = $"Document {i} for {workspace.Name}",
-                    Content = $"""
-                    This is seeded content for {workspace.Name}.
-
-                    Document number: {i}
-                    Created for testing:
-                    - test test
-                    - test test
-                    """,
-                    CreatedAt = workspace.CreatedAt.AddDays(random.Next(0, 15)),
-                    UpdatedAt = random.Next(0, 2) == 0 ? null : DateTime.UtcNow.AddDays(-random.Next(0, 10))
-                });
-            }
+            Console.WriteLine($"[SEED] Creating secret #{i + 1}");
+            Console.WriteLine($"       SecretId: {secret.Id}");
+            Console.WriteLine($"       RawAccessToken: {rawTokens[i]}");
+            Console.WriteLine($"       HashedAccessToken(Base64): {Convert.ToBase64String(secret.HashedAccessToken)}");
+            Console.WriteLine($"       ExpiresAt: {secret.ExpiresAt:O}");
+            Console.WriteLine($"       MaxViews: {(secret.MaxViews?.ToString() ?? "null")}");
+            Console.WriteLine($"       CurrentViews: {secret.CurrentViews}");
+            Console.WriteLine($"       RequiresPassword: {secret.RequiresPassword}");
         }
 
-        return documents;
-    }
+        db.Secrets.AddRange(secrets);
+        db.SaveChanges();
 
-    private static List<Invite> SeedInvites(List<Workspace> workspaces, Random random)
-    {
-        var invites = new List<Invite>();
-
-        int inviteCounter = 1;
-
-        foreach (var workspace in workspaces)
-        {
-            int inviteCount = random.Next(0, 3);
-
-            for (int i = 0; i < inviteCount; i++)
-            {
-                invites.Add(new Invite
-                {
-                    Id = Guid.NewGuid(),
-                    WorkspaceId = workspace.Id,
-                    Email = $"invite{inviteCounter}@mail.com",
-                    Role = random.Next(0, 2) == 0 ? "Viewer" : "Editor",
-                    Token = Guid.NewGuid().ToString("N"),
-                    ExpiresAt = DateTime.UtcNow.AddDays(7 + random.Next(0, 14)),
-                    IsUsed = false,
-                    CreatedAt = DateTime.UtcNow.AddDays(-random.Next(0, 5))
-                });
-
-                inviteCounter++;
-            }
-        }
-
-        return invites;
+        Console.WriteLine("[SEED] SaveChanges completed.");
+        Console.WriteLine($"[SEED] Inserted 1 user and {secrets.Count} secrets.");
+        Console.WriteLine("[SEED] SeedAll finished.");
     }
 }
-*/

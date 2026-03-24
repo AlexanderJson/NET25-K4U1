@@ -4,17 +4,23 @@ using MyWebApi.App.Abstracts;
 using MyWebApi.App.Exceptions;
 using MyWebApi.Api.Interfaces;
 using System.Text.Json;
+using MyWebApi.App.Querying;
 using Microsoft.Extensions.Caching.Distributed;
+using MyWebApi.App.External.Quantum;
+using MyWebApi.App.Interfaces;
 namespace MyWebApi.App.Services;
 
 public class UserService(
     IUserRepository userRepo,
-    IDistributedCache cache) 
-: AService<CreateUserDto, UserDto, User>(userRepo)
-
+    IDistributedCache cache,
+    IQuantumService quantumS)
+    : AService<CreateUserDto, UserDto, User>(userRepo),
+      IUserService<CreateUserDto, UserDto>
 {
     private readonly IUserRepository _userRepo = userRepo;
+    private readonly IQuantumService _quantumService = quantumS;
     private readonly IDistributedCache _cache = cache;
+
 
     protected override void ApplyUpdate(User entity, CreateUserDto dto)
     {
@@ -50,18 +56,26 @@ public class UserService(
         };
     }
 
+        public async Task<string> GeneratePassword()
+        {
+            var random = await _quantumService.GetRandomSeedAsync();
+
+            if (random == null || random.Data.Length == 0)
+                throw new Exception("Quantum API failed");
+
+            var bytes = random.Data
+                .Take(4) 
+                .SelectMany(BitConverter.GetBytes)
+                .ToArray();
+
+            return Convert.ToBase64String(bytes);
+        }
+
     protected override void ValidateArgs(CreateUserDto dto)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(dto.Username);
-
-        if (string.IsNullOrWhiteSpace(dto.Username))
-            throw new ArgumentException("Username required.");
-
-        if (string.IsNullOrWhiteSpace(dto.Email))
-            throw new ArgumentException("Email required.");
-
-        if (string.IsNullOrWhiteSpace(dto.Password))
-            throw new ArgumentException("Password required.");
+        ExceptionHelper.ThrowIfUsernameEmptyOrWhiteSpace(dto.Username);
+        ExceptionHelper.ThrowIfUsernameEmptyOrWhiteSpace(dto.Email);
+        ExceptionHelper.ThrowIfUsernameEmptyOrWhiteSpace(dto.Password);
 
         if (_userRepo.IsUsernameTaken(dto.Username))
             throw new UsernameTakenException("Username already exists.");
@@ -87,10 +101,34 @@ public class UserService(
         }
     }
 
+    public void SetPassword(Guid userId, string rawPassword)
+    {
+        var user = _userRepo.GetById(userId);
+
+        if (user == null)
+            throw new NotFoundException("User not found");
+
+        user.HashedPassword = BCrypt.Net.BCrypt.HashPassword(rawPassword);
+
+        _userRepo.Update(user);
+    }
+
     protected override IQueryable<User> ApplyOrdering(IQueryable<User> query)
     {
         return query.OrderBy(u => u.Username);
     }
+
+
+        public IEnumerable<UserDto> SearchByUsername(string username)
+        {
+            ExceptionHelper.ThrowIfUsernameEmptyOrWhiteSpace(username);
+
+            var users = _repo.Query()
+                .FilterByUsername(username)
+                .ToList();
+
+            return users.Select(ReturnDto);
+        }
 
     public override PagedResult<UserDto> GetPaged(int page, int pageSize)
     {

@@ -125,12 +125,14 @@ public class AesGcmUtils
     /// <param name="maxViews"></param>
     /// <param name="requiresPassword"></param>
     /// <returns></returns>
-
     public static byte[] GenerateAad(AadDto aad)
     {
         ArgumentNullException.ThrowIfNull(aad);
-        var aadJoined = $"{aad.SecretId:N}|{aad.ExpiresAt:O}|{aad.MaxViews}|{aad.RequiresPassword}";
+
+        var expires = DateTime.SpecifyKind(aad.ExpiresAt, DateTimeKind.Utc)
+            .ToString("O");
+
+        var aadJoined = $"{aad.SecretId:N}|{expires}|{aad.MaxViews}|{aad.RequiresPassword}";
         return Encoding.UTF8.GetBytes(aadJoined);
     }
-
 }

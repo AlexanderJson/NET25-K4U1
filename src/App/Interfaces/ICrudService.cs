@@ -6,7 +6,8 @@ namespace MyWebApi.App.Interfaces;
 // TGet = the data sent back from db to client
 public interface ICrudService<TPost, TGet>
 {
-    PagedResult<TGet> GetPaged(int page, int pageSize); //TODO
+    PagedResult<TGet> GetPaged(int page, int pageSize);
+    
     List<TGet> GetAll();
     TGet GetById(Guid id);
     void Delete(Guid id);
