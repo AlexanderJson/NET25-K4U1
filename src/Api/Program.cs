@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyWebApi.Api.Interfaces;
+using MyWebApi.App.Demo;
 using MyWebApi.App.DTO;
 using MyWebApi.App.External.Quantum;
 using MyWebApi.App.Interfaces;
@@ -18,6 +19,7 @@ using MyWebApi.Infrastructure.Data;
 using MyWebApi.Infrastructure.Repositories.Users;
 using Scalar.AspNetCore;
 using System.Text;
+using MyWebApi.App.Demo;
 
 namespace MyWebApi;
 
@@ -26,7 +28,24 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        if(builder.Environment.IsDevelopment())
+        {
+            var jwtKey = builder.Configuration["Jwt:Key"];
+            var secretKey = builder.Configuration["SecretEncryption:Key"];
+            if(string.IsNullOrWhiteSpace(jwtKey))
+            {
+                var generate = DemoKeyGen.GenerateBase64Key(32);
+                builder.Configuration["Jwt:Key"] = generate;
+                Console.WriteLine($"IN DemO MODE!! Generated JWT Key: {generate}");
+            }
 
+            if(string.IsNullOrWhiteSpace(secretKey))
+            {
+                var generate = DemoKeyGen.GenerateBase64Key(32);
+                builder.Configuration["SecretEncryption:Key"] = generate;
+                Console.WriteLine($"[DEV] Generated Secret Key: {generate}");
+            }
+        }
         // Registers all controllers
         builder.Services.AddControllers();
         // OpenAPI / Swagger
@@ -39,7 +58,7 @@ public class Program
         builder.Configuration.GetSection("Jwt"));
         // same with external api
         builder.Services.Configure<QuantumOptions>(builder.Configuration.GetSection("ExternalApis:QuantumNumbers"));
-
+        // secret key for secrets
         builder.Services.Configure<SecretOptions>(
             builder.Configuration.GetSection("SecretEncryption"));
 
@@ -47,7 +66,7 @@ public class Program
         /// JwT setup 
 
         // Tries to read the JwT metadata (from JwTOptions) or throw error to user
-        var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
+        JwtOptions jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
                   ?? throw new InvalidOperationException("Jwt config missing");
         // enables our JwT auth
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -91,7 +110,7 @@ public class Program
         builder.Services.AddScoped<ISecretService, SecretService>();
         builder.Services.AddScoped<ITokenService, TokenService>();
 
-
+        builder.Services.AddScoped<UserContext>(); 
         /// Repository registration
         
         // Domain Repositories
@@ -113,7 +132,13 @@ public class Program
 
             client.BaseAddress = new Uri(quantumBaseUrl);
         });
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = builder.Configuration["Redis:ConnectionString"]
+                ?? throw new InvalidOperationException("Missing configuration: Redis:ConnectionString");
 
+            options.InstanceName = "MyWebApi:";
+        });
 
 
         /// DATABASE CONFIG
@@ -148,12 +173,11 @@ public class Program
                 options.WithTitle("DEV API ")
                        .WithTheme(ScalarTheme.Moon);
             });
-
+        }
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
         app.Run();
-    }
 }
 
 

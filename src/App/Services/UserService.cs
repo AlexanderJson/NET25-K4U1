@@ -3,13 +3,18 @@ using MyWebApi.Domain.Entities;
 using MyWebApi.App.Abstracts;
 using MyWebApi.App.Exceptions;
 using MyWebApi.Api.Interfaces;
-
+using System.Text.Json;
+using Microsoft.Extensions.Caching.Distributed;
 namespace MyWebApi.App.Services;
 
-public class UserService(IUserRepository userRepo)
-    : AService<CreateUserDto, UserDto, User>(userRepo)
+public class UserService(
+    IUserRepository userRepo,
+    IDistributedCache cache) 
+: AService<CreateUserDto, UserDto, User>(userRepo)
+
 {
     private readonly IUserRepository _userRepo = userRepo;
+    private readonly IDistributedCache _cache = cache;
 
     protected override void ApplyUpdate(User entity, CreateUserDto dto)
     {
@@ -83,5 +88,32 @@ public class UserService(IUserRepository userRepo)
     protected override IQueryable<User> ApplyOrdering(IQueryable<User> query)
     {
         return query.OrderBy(u => u.Username);
+    }
+
+    public override PagedResult<UserDto> GetPaged(int page =1, int pageSize)
+    {
+        var cacheKey = $"users:p{page}:s{pageSize}";
+        var cachedJson = _cache.GetString(cacheKey);
+        if (!string.IsNullOrWhiteSpace(cachedJson))
+        {
+            var cached = JsonSerializer.Deserialize<PagedResult<UserDto>>(cachedJson);
+            
+            
+            if (cached is not null)
+                return cached;
+        }
+        var result = base.GetPaged(page, pageSize);
+        var json = JsonSerializer.Serialize(result);
+        _cache.SetString(
+            cacheKey,
+            json,
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+            });
+
+        return result;
+
+
     }
 }
