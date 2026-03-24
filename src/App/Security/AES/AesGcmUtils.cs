@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 
 /// <summary>
-/// The main encryption logic. 
+/// The main encryption/decryption logic
 /// </summary>
 public class AesGcmUtils
 {
@@ -20,13 +20,13 @@ public class AesGcmUtils
     /// <param name="key">The 256-bit masterkey</param>
     /// <returns>Base64 string containing nonce + tag + ciphertext.</returns>
     /// <exception cref="Exception"></exception>
-    public static string Encrypt(string content, byte[] key)
+    public static string Encrypt(string content, byte[] key, byte[] aad)
     {
         try
         {
             ArgumentNullException.ThrowIfNull(content);
             ArgumentNullException.ThrowIfNull(key);
-
+            ArgumentNullException.ThrowIfNull(aad);
             if(key.Length != 32) throw new ArgumentException("Incorrect key size!");
 
             // Creates the nonce (a 12 byte long vector with random values)
@@ -47,7 +47,7 @@ public class AesGcmUtils
 
 
             // Now we run the encryption to generate our encrypted content + authentication tag
-            AesGcm.Encrypt(Nonce, ContentBytes, CipherContent, Tag);
+            AesGcm.Encrypt(Nonce, ContentBytes, CipherContent, Tag, aad);
             /* 
             AesGcm returns three outputs (nonce, ciphercontent, tag).
             So to return the full encrypted data, we first have to 
@@ -67,12 +67,15 @@ public class AesGcmUtils
         }            
     }
 
-    public static string Decrypt(string encryptedContent, byte[] key)
+    public static string Decrypt(string encryptedContent, byte[] key, byte[] aad)
     {
         try
         {
             ArgumentNullException.ThrowIfNull(encryptedContent);
             ArgumentNullException.ThrowIfNull(key);
+            ArgumentNullException.ThrowIfNull(aad);
+
+
             if (key.Length != 32)
                 throw new ArgumentException("Incorrect key size!");
 
@@ -95,7 +98,7 @@ public class AesGcmUtils
 
             
             using var aesGcm = new AesGcm(key, _tagLen);
-            aesGcm.Decrypt(Nonce, CipherData, Tag, DecryptedContentBytes);
+            aesGcm.Decrypt(Nonce, CipherData, Tag, DecryptedContentBytes,aad);
             return Encoding.UTF8.GetString(DecryptedContentBytes);
         }
         
@@ -108,6 +111,26 @@ public class AesGcmUtils
         {
             throw new Exception("Failed to decrypt.");
         }
+    }
+
+    /// <summary>
+    /// We encrypt not only the content, but also some metadata 
+    /// about the content. This is a nice way to ensure that things like
+    /// expiration date etc is not tampered with. This is only applied to
+    /// metadata that is not dynamic. So if the user wants to change any of these
+    /// then the content will have to be encrypted again. Which will be implemented later if I have the time.
+    /// </summary>
+    /// <param name="secretId"></param>
+    /// <param name="expiresAt"></param>
+    /// <param name="maxViews"></param>
+    /// <param name="requiresPassword"></param>
+    /// <returns></returns>
+
+    public static byte[] GenerateAad(AadDto aad)
+    {
+        ArgumentNullException.ThrowIfNull(aad);
+        var aadJoined = $"{aad.SecretId:N}|{aad.ExpiresAt:O}|{aad.MaxViews}|{aad.RequiresPassword}";
+        return Encoding.UTF8.GetBytes(aadJoined);
     }
 
 }
