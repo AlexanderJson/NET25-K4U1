@@ -32,7 +32,7 @@ public static class IQueryExtensions
         }
     }
 
-
+    /*
     extension(IQueryable<Workspace> query)
     {
         public IQueryable<Workspace> ForUser(Guid userId)
@@ -43,6 +43,6 @@ public static class IQueryExtensions
             );
         }
     }
-
+    */
 }
 

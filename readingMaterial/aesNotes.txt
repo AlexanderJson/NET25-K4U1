@@ -1,0 +1,49 @@
+    /// <summary>
+    /// 
+    /// Encrypts the content with the AES-256 block cipher.
+    /// 
+    /// 
+    /// AES-256: 
+    /// - Expands the 256-bit key into fifteen (128-bit) keys (round keys)
+    /// - Plaintext bytes are XOR:ed with round key(0) 
+    ///  
+    /// For each round (1->13)
+    /// state(current cipherblock) is transformed in 4 steps.
+    /// 
+    ///     Step 1: SubBytes
+    ///     Each byte gets replaced through AES s-box (basically a lookup table).
+    ///     This  makes the cipher more resistant to some pattern based attacks, because is makes the relationship between plaintext,ciphertext and
+    ///     secret key harcer to predict.
+    /// 
+    ///      
+    ///     Step 2: ShiftRows
+    ///     Each row is shifted one step left by its row number.
+    ///     So row 0->0 steps, row 1->1 step etc..
+    ///     This ensures each byte has influenced everyother byte. 
+    ///     Which is important because we dont want positions to reveal patterns either. 
+    ///      
+    ///     
+    ///     Step 3: MixColumns
+    ///     Then every column is multiplied by a fixed matrix. 
+    ///     This makes it even more mixed. 
+    /// 
+    ///     Step 4: AddRoundKey
+    ///     Then the current matrix is XOR:ed with the current round key.
+    ///     This step is where we actually mix in the secret key. 
+    ///     So we can use it to decrypt our data if the key is correct. 
+    /// 
+    /// Final round(14):
+    ///     Performs step 1,2,4 (so all but MixColumns). 
+    /// 
+    /// GCM (Authentication):
+    /// GCM uses AES in counter mode for encryption and separately computes an authentication tag over the ciphertext and any additional authenticated data (AAD).
+    /// During decryption, the tag is recomputed and compared. If anything has changed — ciphertext, nonce, AAD, or tag — verification fails and decryption is rejected.
+    ///   
+    ///     
+    /// 
+    ///   
+    ///   
+    /// 
+    /// 
+    /// 
+    /// </summary>

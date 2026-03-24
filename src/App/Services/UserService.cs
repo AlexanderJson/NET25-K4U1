@@ -13,6 +13,9 @@ public class UserService(IUserRepository userRepo)
 
     protected override void ApplyUpdate(User entity, CreateUserDto dto)
     {
+        ArgumentNullException.ThrowIfNull(dto.Username);
+        ArgumentNullException.ThrowIfNull(dto.Email);
+        
         if (!string.IsNullOrWhiteSpace(dto.Username))
             entity.Username = dto.Username;
 
