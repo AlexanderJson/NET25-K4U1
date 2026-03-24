@@ -52,6 +52,8 @@ public class UserService(
 
     protected override void ValidateArgs(CreateUserDto dto)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(dto.Username);
+
         if (string.IsNullOrWhiteSpace(dto.Username))
             throw new ArgumentException("Username required.");
 
@@ -90,8 +92,9 @@ public class UserService(
         return query.OrderBy(u => u.Username);
     }
 
-    public override PagedResult<UserDto> GetPaged(int page =1, int pageSize)
+    public override PagedResult<UserDto> GetPaged(int page, int pageSize)
     {
+
         var cacheKey = $"users:p{page}:s{pageSize}";
         var cachedJson = _cache.GetString(cacheKey);
         if (!string.IsNullOrWhiteSpace(cachedJson))
