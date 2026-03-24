@@ -44,20 +44,6 @@ public class DevController(AppDbContext db) : ControllerBase
 
         _db.Secrets.Add(secret);
         _db.SaveChanges();
-
-        Console.WriteLine("DEV: Created user:");
-        Console.WriteLine($"       Id: {user.Id}");
-        Console.WriteLine($"       Username: {user.Username}");
-        Console.WriteLine($"       Email: {user.Email}");
-
-        Console.WriteLine("dev: Created secret:");
-        Console.WriteLine($"       SecretId: {secret.Id}");
-        Console.WriteLine($"       RawAccessToken: {rawToken}");
-        Console.WriteLine($"       HashedAccessToken(Base64): {Convert.ToBase64String(secret.HashedAccessToken)}");
-        Console.WriteLine($"       ExpiresAt: {secret.ExpiresAt:O}");
-
-        Console.WriteLine("dev: Runtime seed completed.");
-
         return Ok(new
         {
             User = new
@@ -75,4 +61,28 @@ public class DevController(AppDbContext db) : ControllerBase
             }
         });
     }
+
+    [HttpPost("seed")]
+    public IActionResult Seed()
+    {
+        var users = new List<User>();
+
+        for (int i = 0; i < 10; i++)
+        {   
+            Console.Write($"AT: {i}");
+            users.Add(new User
+            {
+                Id = Guid.NewGuid(),
+                Username = $"DemoUser_{Guid.NewGuid().ToString()[..6]}",
+                Email = $"demo_{Guid.NewGuid().ToString()[..6]}@test.com",
+                HashedPassword = BCrypt.Net.BCrypt.HashPassword("123456")
+            });
+        }
+
+        _db.Users.AddRange(users);
+        _db.SaveChanges();
+
+        return Ok($"Inserted {users.Count} users");
+    }
+    
 }

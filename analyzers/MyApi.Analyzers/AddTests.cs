@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-
+/*
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class IfStatementAnalyzer : DiagnosticAnalyzer
 {
@@ -41,4 +41,4 @@ private static void AnalyzeIfStatement(SyntaxNodeAnalysisContext context)
 
     context.ReportDiagnostic(diagnostic);
 }
-}
+}*/

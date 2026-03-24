@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Immutable;
 using Microsoft.VisualBasic;
-
+/*
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class Class1 : DiagnosticAnalyzer
 {
@@ -98,4 +98,4 @@ public class TodoItem
     public string Text { get; set; } = "";
     public string File { get; set; } = "";
     public int Line { get; set; }
-}
+}*/
