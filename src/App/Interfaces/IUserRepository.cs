@@ -7,7 +7,7 @@ namespace MyWebApi.Api.Interfaces;
 */
 public interface IUserRepository : ICrudRepository<User>
 {
-    bool IsUsernameTaken(string username);
-    bool IsEmailTaken(string email);
+    Task<bool> IsUsernameTaken(string username);
+    Task<bool> IsEmailTaken(string email);
 
 }

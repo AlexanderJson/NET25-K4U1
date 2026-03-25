@@ -15,14 +15,11 @@ namespace MyWebApi.App.Interfaces;
 public interface ICrudRepository<TEntity>
 {
 
-    IQueryable<TEntity> Query();
-    void Add(TEntity data);
-    TEntity GetById(Guid id);
-
-    void Update(TEntity data);
-
-    List<TEntity> GetAll();
-
-    void Delete(TEntity data);
+    Task<List<TEntity>> GetAll();
+    Task<TEntity?> GetById(Guid id);
+    Task Add(TEntity data);
+    Task Update(TEntity data);
+    Task Delete(TEntity data);
+    IQueryable<TEntity> Query(); 
     
 }

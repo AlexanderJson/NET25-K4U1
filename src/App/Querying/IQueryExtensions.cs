@@ -41,6 +41,31 @@ public static class IQueryExtensions
 
                 return query.Where(u => u.Username.Contains(username));
             }
+        
+    }
+
+
+    extension(IQueryable<Secret> query)
+    {
+        public IQueryable<Secret> OwnedBy(Guid userId)=>
+         query.Where(s=> s.OwnerId == userId);
+            
+        public IQueryable<Secret> WhereActive()
+            {
+                var now = DateTime.UtcNow;
+
+                return query.Where(s =>
+                    s.ExpiresAt > now &&
+                    (s.MaxViews == null || s.CurrentViews < s.MaxViews));
+            }
+        public IQueryable<UserSecretList> ToUserList() =>
+            query.Select(s => new UserSecretList
+            {
+                Views = s.CurrentViews,
+                MaxViews = s.MaxViews,
+                Label = s.Label
+            });
+
     }
 
 

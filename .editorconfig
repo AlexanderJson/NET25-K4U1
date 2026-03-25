@@ -12,15 +12,7 @@ indent_size = 4
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false
 
-csharp_style_var_for_built_in_types = true:suggestion
-csharp_style_var_when_type_is_apparent = true:suggestion
-csharp_style_var_elsewhere = false:suggestion
 
- 
-dotnet_diagnostic.IDE0005.severity = warning
-
-[is_generatedcode = true]
-dotnet_analyzer_diagnostic.severity = none
 
 [**/obj/**]
 dotnet_analyzer_diagnostic.severity = none

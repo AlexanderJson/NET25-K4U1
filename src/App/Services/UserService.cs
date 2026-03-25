@@ -56,13 +56,26 @@ public class UserService(
         };
     }
 
+        /// <summary>
+        /// Just a temporary password generator. Uses
+        /// an API that generates quantum numbers based 
+        /// on quantum fluctuations. 
+        /// 
+        /// I wouldn't really use this in a real API
+        /// since theres libraries that can still achieve
+        /// high entropy randomness without the effort and risks.
+        /// 
+        /// But it was a fun implementaton to test.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public async Task<string> GeneratePassword()
         {
             var random = await _quantumService.GetRandomSeedAsync();
 
             if (random == null || random.Data.Length == 0)
                 throw new Exception("Quantum API failed");
-
+            // some basic conversion incase the data was leaked 
             var bytes = random.Data
                 .Take(4) 
                 .SelectMany(BitConverter.GetBytes)
@@ -71,46 +84,67 @@ public class UserService(
             return Convert.ToBase64String(bytes);
         }
 
-    protected override void ValidateArgs(CreateUserDto dto)
+    private async Task ValidateCreateAsync(CreateUserDto dto)
     {
         ExceptionHelper.ThrowIfUsernameEmptyOrWhiteSpace(dto.Username);
         ExceptionHelper.ThrowIfUsernameEmptyOrWhiteSpace(dto.Email);
         ExceptionHelper.ThrowIfUsernameEmptyOrWhiteSpace(dto.Password);
 
-        if (_userRepo.IsUsernameTaken(dto.Username))
+        if (await _userRepo.IsUsernameTaken(dto.Username))
             throw new UsernameTakenException("Username already exists.");
 
-        if (_userRepo.IsEmailTaken(dto.Email))
+        if (await _userRepo.IsEmailTaken(dto.Email))
             throw new ArgumentException("Email already exists.");
     }
 
-    protected override void ValidateUpdate(User entity, CreateUserDto dto)
+    private async Task ValidateUpdateAsync(User entity, CreateUserDto dto)
     {
         if (!string.IsNullOrWhiteSpace(dto.Username) &&
             dto.Username != entity.Username &&
-            _userRepo.IsUsernameTaken(dto.Username))
+            await _userRepo.IsUsernameTaken(dto.Username))
         {
             throw new UsernameTakenException("Username already taken.");
         }
 
         if (!string.IsNullOrWhiteSpace(dto.Email) &&
             dto.Email != entity.Email &&
-            _userRepo.IsEmailTaken(dto.Email))
+            await _userRepo.IsEmailTaken(dto.Email))
         {
             throw new ArgumentException("Email already taken.");
         }
     }
-
-    public void SetPassword(Guid userId, string rawPassword)
+    public override async Task Add(CreateUserDto dto)
     {
-        var user = _userRepo.GetById(userId);
+        await ValidateCreateAsync(dto);
 
-        if (user == null)
-            throw new NotFoundException("User not found");
+        var entity = GetEntity(dto);
 
+        await _userRepo.Add(entity);
+    }
+
+    public override async Task<UserDto> Update(Guid id, CreateUserDto dto)
+    {
+        if (id == Guid.Empty)
+            throw new InvalidIdException($"Invalid ID: {id}");
+
+        var entity = await _userRepo.GetById(id)
+            ?? throw new NotFoundException("User not found");
+
+        await ValidateUpdateAsync(entity, dto);
+
+        ApplyUpdate(entity, dto);
+
+        await _userRepo.Update(entity);
+
+        return ReturnDto(entity);
+    }
+
+    public async Task SetPassword(Guid userId, string rawPassword)
+    {
+        var user = await _userRepo.GetById(userId) ?? throw new NotFoundException("User not found");
         user.HashedPassword = BCrypt.Net.BCrypt.HashPassword(rawPassword);
 
-        _userRepo.Update(user);
+        await _userRepo.Update(user);
     }
 
     protected override IQueryable<User> ApplyOrdering(IQueryable<User> query)
@@ -119,33 +153,26 @@ public class UserService(
     }
 
 
-        public IEnumerable<UserDto> SearchByUsername(string username)
-        {
-            ExceptionHelper.ThrowIfUsernameEmptyOrWhiteSpace(username);
 
-            var users = _repo.Query()
-                .FilterByUsername(username)
-                .ToList();
 
-            return users.Select(ReturnDto);
-        }
-
-    public override PagedResult<UserDto> GetPaged(int page, int pageSize)
+    public override async Task<PagedResult<UserDto>> GetPaged(int page, int pageSize)
     {
-
         var cacheKey = $"users:p{page}:s{pageSize}";
-        var cachedJson = _cache.GetString(cacheKey);
+
+        var cachedJson = await _cache.GetStringAsync(cacheKey);
+
         if (!string.IsNullOrWhiteSpace(cachedJson))
         {
             var cached = JsonSerializer.Deserialize<PagedResult<UserDto>>(cachedJson);
-            
-            
             if (cached is not null)
                 return cached;
         }
-        var result = base.GetPaged(page, pageSize);
+
+        var result = await base.GetPaged(page, pageSize);
+
         var json = JsonSerializer.Serialize(result);
-        _cache.SetString(
+
+        await _cache.SetStringAsync(
             cacheKey,
             json,
             new DistributedCacheEntryOptions
@@ -154,7 +181,20 @@ public class UserService(
             });
 
         return result;
-
-
     }
+
+
+
+    public async Task<IEnumerable<UserDto>> SearchByUsername(string username)
+    {
+        ExceptionHelper.ThrowIfUsernameEmptyOrWhiteSpace(username);
+
+        var users = _repo.Query()
+            .FilterByUsername(username)
+            .ToList();
+
+        return users.Select(ReturnDto);
+    }
+
+    
 }
