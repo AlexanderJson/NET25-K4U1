@@ -1,5 +1,5 @@
 public interface IJwTService
 {
-    string GenerateToken(Guid userId, string username);
+    string  GenerateToken(Guid userId, string username);
     
 }

@@ -13,67 +13,65 @@ public abstract class AService<TPostDto, TGetDto, TEntity> : ICrudService<TPostD
     }
 
 
-    public virtual List<TGetDto> GetAll()
+    public virtual async Task<List<TGetDto>> GetAll()
     {
-        return [.. _repo.GetAll().Select(ReturnDto)];
+        var entities = await _repo.GetAll();
+        return [.. entities.Select(ReturnDto)];
     }
 
-    public virtual TGetDto GetById(Guid id)
-    {
-        if(id == Guid.Empty) throw new InvalidIdException($"ID is either empty or invalid type. Try again..! ID sent: {id}");
-        TEntity e = _repo.GetById(id) ?? throw new NotFoundException($"{typeof(TEntity).Name} not found");
-        return ReturnDto(e);   
-    }
-    public virtual void Delete(Guid id)
+
+    public virtual async Task<TGetDto?> GetById(Guid id)
     {
         _validateId(id);
-        TEntity entity = _repo.GetById(id) ?? throw new NotFoundException($"{typeof(TEntity).Name} not found");;
-        _repo.Delete(entity);
+
+        var entity = await _repo.GetById(id)
+            ?? throw new NotFoundException($"{typeof(TEntity).Name} not found");
+
+        return ReturnDto(entity);
+    }
+
+    public virtual async Task Delete(Guid id)
+    {
+        _validateId(id);
+
+        var entity = await _repo.GetById(id)
+            ?? throw new NotFoundException($"{typeof(TEntity).Name} not found");
+
+        await _repo.Delete(entity);
     }
 
 
 
-    public virtual void Add(TPostDto dto)
+    public virtual async Task Add(TPostDto dto)
     {
-        ValidateArgs(dto);
-
         var entity = GetEntity(dto);
-
-        _repo.Add(entity);
+        await _repo.Add(entity);
     }
 
 
 
-    public virtual TGetDto Update(Guid id, TPostDto dto)
+    public virtual async Task<TGetDto> Update(Guid id, TPostDto dto)
     {
         _validateId(id);
-        ValidateArgs(dto);
-        var entity = _repo.GetById(id);
-        ApplyUpdate(entity,dto);
-        _repo.Update(entity);
+
+        var entity = await _repo.GetById(id)
+            ?? throw new NotFoundException($"{typeof(TEntity).Name} not found");
+        ApplyUpdate(entity, dto);
+
+        await _repo.Update(entity);
+
         return ReturnDto(entity);
     }
 
 
 
-    // Global helpers I can use
+    // Global helper I can use
     private static void _validateId(Guid id)
     {
         if(id == Guid.Empty)
             throw new InvalidIdException($"Invalid ID: {id}");
     }
 
-    protected virtual void ValidateArgs(TPostDto dto)
-    {
-        if (dto == null)
-            throw new ArgumentException("DTO cannot be null");
-    }
-
-    protected virtual void ValidateUpdate(TEntity entity, TPostDto dto)
-    {
-        if (dto == null)
-            throw new ArgumentException("DTO cannot be null");
-    }
 
 
     protected virtual IQueryable<TEntity> ApplyOrdering
@@ -87,24 +85,24 @@ public abstract class AService<TPostDto, TGetDto, TEntity> : ICrudService<TPostD
     
     protected abstract TEntity GetEntity(TPostDto dto);
     protected abstract TGetDto ReturnDto(TEntity entity);
-
     protected abstract void ApplyUpdate(TEntity entity, TPostDto dto);
 
-    public virtual  PagedResult<TGetDto> GetPaged(int page, int pageSize)
+    public virtual async Task<PagedResult<TGetDto>> GetPaged(int page, int pageSize)
     {
         IQueryable<TEntity> query = ApplyOrdering(_repo.Query());
+
         var totalCount = query.Count();
-        IEnumerable<TGetDto> data = query
+
+        var data = query
             .ApplyPagination(page, pageSize)
             .ToList()
             .Select(ReturnDto);
-        return new PagedResult<TGetDto>
-        (
+
+        return new PagedResult<TGetDto>(
             data,
             totalCount,
             page,
             pageSize
         );
-        
     }
 }

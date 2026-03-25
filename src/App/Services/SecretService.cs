@@ -16,18 +16,18 @@ public class SecretService(
     private readonly ITokenService _tokenService = tokenService;
     private readonly ISecretRepository _repo = repo;
 
+
     // fetches key from options -> config 
     private readonly byte[] _key = Convert.FromBase64String(options.Value.Key);
 
-    public CreatedSecretDto CreateSecret(CreateSecretDto dto)
+    public async Task<CreatedSecretDto> CreateSecret(CreateSecretDto dto, Guid? userId)
     {
         ArgumentNullException.ThrowIfNull(dto);
         if (string.IsNullOrWhiteSpace(dto.Content))
             throw new ArgumentException("Content is required.");
 
-        if (dto.MaxViews is <= 0)
+        if (dto.MaxViews.HasValue && dto.MaxViews <= 0)
             throw new ArgumentException("MaxViews must be greater than 0 when provided.");
-
         DateTime expiresAt = dto.ExpiresAt.ToUniversalTime();
 
         if (expiresAt <= DateTime.UtcNow)
@@ -44,7 +44,7 @@ public class SecretService(
         };
         var aad = AesGcmUtils.GenerateAad(aadDto);
         var encryptedContent = AesGcmUtils.Encrypt(dto.Content, _key, aad);
-        var secret = new Secret
+         var secret = new Secret
         {
             Id = secretId,
             HashedAccessToken = _tokenService.HashToken(accessToken),
@@ -53,9 +53,11 @@ public class SecretService(
             ExpiresAt = expiresAt,
             MaxViews = dto.MaxViews,
             CurrentViews = 0,
-            RequiresPassword = false
+            Label = dto.Label,
+            RequiresPassword = false,
+            OwnerId = userId 
         };
-        _repo.Add(secret);
+        await _repo.Add(secret);
         return new CreatedSecretDto
         {
             Id = secret.Id,
@@ -64,12 +66,16 @@ public class SecretService(
             MaxViews = secret.MaxViews
         };
     }
+    public async Task<List<UserSecretList>> GetByUserId(Guid userId)
+    {
+        return await _repo.GetUserSecrets(userId);
+    }
 
-    public SecretDto GetByToken(string accessToken)
+    public async Task<SecretDto> GetByToken(string accessToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(accessToken);
         var accessTokenHash = _tokenService.HashToken(accessToken);
-        Secret? secret = _repo.GetByToken(accessTokenHash) ?? throw new KeyNotFoundException("Secret not found."); ;
+        Secret? secret = await _repo.GetByToken(accessTokenHash) ?? throw new KeyNotFoundException("Secret not found."); ;
         //TODO gör riktig delete sen
         if (secret.ExpiresAt <= DateTime.UtcNow)
             throw new InvalidOperationException("Secret has expired.");
@@ -87,7 +93,7 @@ public class SecretService(
 
         var decryptedContent = AesGcmUtils.Decrypt(secret.EncryptedContent, _key, aad);
         secret.CurrentViews += 1;
-        _repo.Update(secret);
+        await _repo.Update(secret);
         return new SecretDto
         {
             SecretId = secret.Id,
@@ -97,6 +103,8 @@ public class SecretService(
             ViewCount = secret.CurrentViews
         };
     }
+
+
 }
 
 

@@ -2,6 +2,9 @@ using MyWebApi.App.DTO;
 namespace MyWebApi.Api.Interfaces;
 public interface ISecretService
 {
-    CreatedSecretDto CreateSecret(CreateSecretDto dto);
-    SecretDto GetByToken(string accessToken);
+    Task<CreatedSecretDto> CreateSecret(CreateSecretDto dto, Guid? id);
+    Task<SecretDto> GetByToken(string accessToken);
+    Task<List<UserSecretList>> GetByUserId(Guid userId);
+
+
 }

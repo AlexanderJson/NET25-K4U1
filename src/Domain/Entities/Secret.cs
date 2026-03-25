@@ -32,17 +32,21 @@ public class Secret
     public DateTime ExpiresAt {get;set;}
     public DateTime CreatedAt { get; set; }
     public Guid? OwnerId { get; set; }
-    public User? Owner { get; set; }    
     public bool RequiresPassword {get; set;}
+    public bool IsAnonymous => OwnerId == null;
+    // for future impl
+    public User? Owner {get; set;}
+    public string? Label { get; set; }
 
-/*
-    /// <summary>
-    /// This is just an optional password client can set
-    /// </summary>
-    public string? PasswordHash {get;set;}
-    public string? PasswordSalt {get; set;}
 
-    public List<Guid>? Permissions {get; set;}
+    /*
+        /// <summary>
+        /// This is just an optional password client can set
+        /// </summary>
+        public string? PasswordHash {get;set;}
+        public string? PasswordSalt {get; set;}
 
-*/
+        public List<Guid>? Permissions {get; set;}
+
+    */
 }

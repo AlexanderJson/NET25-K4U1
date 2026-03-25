@@ -1,19 +1,36 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MyWebApi.Api.Interfaces;
 using MyWebApi.App.DTO;
-
 namespace MyWebApi.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class SecretsController(ISecretService secretService) : ControllerBase
+public class SecretsController(ISecretService secretService, UserContext context) : ControllerBase
 {
     private readonly ISecretService _secretService = secretService;
+    private readonly UserContext _context = context;
+
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetUserSecrets()
+    {
+        var userId = _context.UserId;
+
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await _secretService.GetByUserId(userId.Value);
+        return Ok(result);
+    }
 
     [HttpPost]
-    public ActionResult<CreatedSecretDto> Create(CreateSecretDto dto)
+    public async Task<ActionResult<CreatedSecretDto>> Create(CreateSecretDto dto)
     {
-        var result =  _secretService.CreateSecret(dto);
+        var userId = _context.UserId;
+        var result = await _secretService.CreateSecret(dto, userId);
 
         return CreatedAtAction(
             nameof(Get),
@@ -22,9 +39,9 @@ public class SecretsController(ISecretService secretService) : ControllerBase
     }
 
     [HttpGet("{accessToken}")]
-    public  ActionResult<SecretDto> Get(string accessToken)
+    public async Task<ActionResult<SecretDto>> Get(string accessToken)
     {
-        var result =  _secretService.GetByToken(accessToken);
+        var result = await _secretService.GetByToken(accessToken);
         return Ok(result);
     }
 }

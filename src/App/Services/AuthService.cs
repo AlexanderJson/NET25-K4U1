@@ -7,7 +7,9 @@ public class AuthService(IUserRepository repo, IJwTService jwtService) : IAuth
     private readonly IUserRepository _repo = repo;
     private readonly IJwTService _jwtService = jwtService;
 
-    public string Login(string username, string password)
+
+
+    public async Task<string> Login(string username, string password)
     {
         var user = (_repo.Query()
         .FirstOrDefault(u => u.Username == username) ?? throw new UnauthorizedAccessException()) ?? throw new UnauthorizedAccessException();
@@ -16,6 +18,5 @@ public class AuthService(IUserRepository repo, IJwTService jwtService) : IAuth
             throw new UnauthorizedAccessException();
 
         return _jwtService.GenerateToken(user.Id, user.Username);
-
     }
 }

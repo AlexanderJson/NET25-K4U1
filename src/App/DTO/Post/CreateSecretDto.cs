@@ -8,6 +8,7 @@ public class CreateSecretDto
     public int? MaxViews { get; set; } = 0;
     [Required]
     public DateTime ExpiresAt { get; set; }
+    public string? Label {get; set;}
 
 
     /*
