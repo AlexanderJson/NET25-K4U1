@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Auth-JWT-374151?style=for-the-badge&logo=jsonwebtokens" />
 </p>
 
-<h1 align="center">Safe Storage</h1>
+<h1 align="center">Low Budget Keystore</h1>
 
 <p align="center">
   <em>A secure REST API for storing encrypted data</em><br/>
@@ -15,10 +15,11 @@
 
 ## Overview
 
-A REST API in C# built with ASP.NET Core for securely storing and retrieving sensitive data.
-- User can store text encrypted with AES-256-GCM
-- Set expiration
-- Set number of decryptions allowed
+A REST API for storing encrypted secrets with built-in access rules.
+
+Secrets are encrypted using AES-256-GCM and can be configured to expire or self-destruct after a number of reads.
+
+Access is controlled via one-time tokens, and metadata is protected using authenticated encryption (AAD) to prevent tampering.
 
 ---
 
@@ -29,7 +30,6 @@ A REST API in C# built with ASP.NET Core for securely storing and retrieving sen
 - [Features](#features)
 - [Encryption](#encryption)
 - [Authentication](#authentication)
-- [Architecture](#architecture)
 - [Optimization](#optimization)
 - [Running the Project](#running-the-project)
    
@@ -39,22 +39,15 @@ A REST API in C# built with ASP.NET Core for securely storing and retrieving sen
 
 # Features
 
-- Encrypted secret storage
-- Time-based expiration
-- View-limited access (self-destructing secrets)
+- Encrypted secret storage (optionally with extra rules like set expiration, self destroy upon opening N times)
 - Metadata-bound encryption using AAD
 - JWT-based authentication
-- Layered architecture (clean separation of concerns)
-- Optional caching for improved performance
 
 ---
 
 ## Encryption
 
-Sensitive content is encrypted using **AES-256-GCM**, which provides both:
-
-- **confidentiality** → the plaintext cannot be read without the key
-- **integrity** → tampering causes decryption to fail
+Sensitive content is encrypted using **AES-256-GCM**. 
 
 The encrypted output is stored as:
 
@@ -64,12 +57,8 @@ The encrypted output is stored as:
 
 ### Additional Authenticated Data (AAD)
 
-Adding AAD deceases the risk of **silent tampering attacks**.
 Metadata is bound to the ciphertext using **AAD (Additional Authenticated Data)**.
-
-- metadata is cryptographically verified during the encryption proccess of the cipherblocks.
-- This ensures that any changed data results in mismatched padding and failed decryption.
-
+AAD is authenticated and verified during decryption. Any modification causes decryption to fail
 
 ## Authentication
 
@@ -96,17 +85,7 @@ src/
 ├── Infrastructure/ # DbContext, repositories, persistence
 ```
 
-### Design Principles
-
--  **Separation of concerns** — each layer has a clear responsibility  
--  **Interface-driven design** — contracts are used to communicate the workflow, keeping classes "dumb"
--  **No entity leakage** — DTOs are used for all external communication  
-
-Dependencies are centrally managed and validated to:
-
-- prevent version conflicts  
-- detect vulnerable packages  
-- enforce consistent builds  
+ 
 
 # Optimization
 
@@ -135,7 +114,7 @@ After Caching
 
 2. In your IDE - navigate to `(myapi/src/api)` to run the api.
 
-3. During the development phase a fresh 32-byte key will be generated and destroyed by each run. This is automatically used by the program to generate JwT tokens and Secret Keys to Encryption.
+3. During the development phase a fresh 32-byte key will be generated and destroyed by each run.
 
 4. To get a JwT token - user/post
 
