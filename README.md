@@ -32,8 +32,7 @@ A REST API in C# built with ASP.NET Core for securely storing and retrieving sen
 - [Architecture](#architecture)
 - [Optimization](#optimization)
 - [Running the Project](#running-the-project)
-- [Future Implementation](#future-implementation)
-  
+   
 
 
 ---
