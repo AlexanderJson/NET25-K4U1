@@ -15,7 +15,7 @@
 
 ## Overview
 
-A REST API in C# built with ASP.NET Core for securely storing and retrieving sensitive text.
+A REST API in C# built with ASP.NET Core for securely storing and retrieving sensitive data.
 
 The system is designed around the idea of **secrets**, where stored content can:
 
@@ -43,46 +43,7 @@ The system is designed around the idea of **secrets**, where stored content can:
 
 ## Features
 
-### Creating and Retrieving Secrets
-
-- **Create encrypted secrets**
-- **Retrieve stored secrets**
-- **Automatic expiration handling**
-- **View limit enforcement**
-- **Optional password-protected access**
-
-<p align="center">
-  <b>Secret creation flow</b><br/>
-  <img src="docs/create-secret.png" width="80%" />
-</p>
-
-<p align="center">
-  <b>Secret retrieval flow</b><br/>
-  <img src="docs/get-secret.png" width="80%" />
-</p>
-
-<p align="center">
-  <b>View / expiration enforcement</b><br/>
-  <img src="docs/secret-rules.png" width="80%" />
-</p>
-
----
-
-### Authentication and User Access
-
-- **JWT-based authentication**
-- **Authenticated user endpoints**
-- **User-specific secret actions**
-- **Secure identity handling through claims**
-
-<p align="center">
-  <b>Authenticated user flow</b><br/>
-  <img src="docs/auth-flow.png" width="80%" />
-</p>
-
----
-
-## Encryption & Integrity
+### Encryption
 
 Sensitive content is encrypted using **AES-256-GCM**, which provides both:
 
@@ -96,22 +57,16 @@ The encrypted output is stored as:
 - **Tag**
 
 In addition, metadata is bound using **AAD (Additional Authenticated Data)**.
+Which is a recommended standard. This increases the integrity by cryptographically
+tying metadata with the cipher. If any of these values are changed, decryption fails.
 
-That means values such as:
+### Authentication
 
-- `SecretId`
-- `ExpiresAt`
-- `MaxViews`
-- `RequiresPassword`
+In addition to encryption, client can register as a user. 
+Passwords are by default saved with ###Bcrypt###. 
 
-are not encrypted, but they are still cryptographically tied to the ciphertext.
+JwT tokens are used for every endpoint exclusive to login,register and encrypt/decrypt with a valid 64-base token.
 
-If any of these values are changed, decryption fails.
-
-<p align="center">
-  <b>AES-GCM structure</b><br/>
-  <img src="docs/encryption-flow.png" width="80%" />
-</p>
 
 ---
 
@@ -125,3 +80,19 @@ src/
 ├── App/            # DTOs, services, interfaces, business logic
 ├── Domain/         # Core entities
 ├── Infrastructure/ # DbContext, repositories, persistence
+```
+Dependencies are centralised. Targets and scripting is used to ensure that
+no vulnerable packages are imported to the project. Including packages that other libraries uses.
+
+
+## Caching results
+
+### Fetching 500 users 
+This was tested with different amounts of data and for several iterations.
+
+### Before caching
+<img width="805" height="726" alt="3![Uploading Skärmbild 2026-03-25 022705.png…]()
+23s" src="https://github.com/user-attachments/assets/fd1851d5-e37a-43e1-bafd-589743638b8d" />
+### Afting caching
+<img width="824" height="716" alt="19ms" src="https://github.com/user-attachments/assets/a6f5d9b1-2a29-4b18-b545-bdb2859e9241" />
+
