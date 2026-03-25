@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Auth-JWT-374151?style=for-the-badge&logo=jsonwebtokens" />
 </p>
 
-<h1 align="center">Low Budget Keystore</h1>
+<h1 align="center">CapsuleApi</h1>
 
 <p align="center">
   <em>A secure REST API for storing encrypted data</em><br/>
