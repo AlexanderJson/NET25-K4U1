@@ -13,39 +13,12 @@
 
 ---
 
-There has been an unprecedented rise in cyber attacks targeting open-source
-software and developer tools (2025-2026).
-
-Approximately 90% of codebases contain outdated or unmaintained dependencies,
-while over **1.23 million malicious open-source packages** have been identified 
-from 2025 going into 2026.
-
-This represents a growing risk, further amplified by the increasing volume of
-unrevised AI-generated code that may introduce unreviewed or insecure dependencies.
-
 ## Overview
 
-This REST API provides a secure foundation for storing and retrieving sensitive data.
-
-The goal is to treat security as a core function, not a feature.
-
-The system is designed around the concept of **secrets**, where stored content can:
-
-- expire after a certain time or number of views  
-- be protected using authenticated encryption (AEAD, AES-256-GCM)  
-
-## Zero-Trust Model
-
-In response to these evolving threats, the project follows a **zero-trust model**:
-
-- no input is implicitly trusted  
-- dependencies are treated as potential risk sources  
-- validation and integrity checks are enforced throughout the system  
-
-The system assumes that any component — including dependencies — may be compromised.
-
-The goal is to build workflows that keep both the system and its developers secure,
-while ensuring the confidentiality and integrity of stored data.
+A REST API in C# built with ASP.NET Core for securely storing and retrieving sensitive data.
+- User can store text encrypted with AES-256-GCM
+- Set expiration
+- Set number of decryptions allowed
 
 ---
 
@@ -127,7 +100,6 @@ src/
 ### Design Principles
 
 -  **Separation of concerns** — each layer has a clear responsibility  
--  **Dependency Injection everywhere** — no tight coupling  
 -  **Interface-driven design** — contracts are used to communicate the workflow, keeping classes "dumb"
 -  **No entity leakage** — DTOs are used for all external communication  
 
@@ -136,9 +108,6 @@ Dependencies are centrally managed and validated to:
 - prevent version conflicts  
 - detect vulnerable packages  
 - enforce consistent builds  
-
-Mainly implemented with **Targets** and enabling **CentralPackageTransitivePinning**.
-
 
 # Optimization
 
@@ -174,18 +143,5 @@ After Caching
 5. To encrypt/decrypt use the `secret/` endpoint.
 
 
-## Future Implementation
-
-- E2E-Encryption (current plan: Diffie-Hellman + ECDH)
-- A SECURITY.md
-- Several types of Encryption methods, with user being given option to choose difficulty/algorithm
-- Approaching the concept of future-proofing security (ECDH -> Post-Quantum Cryptography (PQC) (example ML-KEM (Kyber))
-- Better password solutions
-
-### Bugs & Stuff to fix
-- Testing
-- Make sure nothing sensitive is sent to repo
-- Add back the CD/CI pipeline but integrated with project settings
-- 
 
 
